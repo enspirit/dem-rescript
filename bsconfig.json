@@ -1,0 +1,21 @@
+{
+  "name": "reasonml-starter",
+  "version": "0.1.0",
+  "sources": [
+    {
+        "dir" : "src",
+        "subdirs" : true
+    }
+  ],
+  "package-specs": {
+    "module": "commonjs",
+    "in-source": true
+  },
+  "suffix": ".bs.js",
+  "bs-dependencies": ["bs-markdown-it"],
+  "bs-dev-dependencies": [],
+  "warnings": {
+    "error" : "+101"
+  },
+  "refmt": 3
+}
