@@ -12,7 +12,7 @@
     "in-source": true
   },
   "suffix": ".bs.js",
-  "bs-dependencies": ["bs-markdown-it"],
+  "bs-dependencies": ["bs-markdown-it", "bs-mustache"],
   "bs-dev-dependencies": [],
   "warnings": {
     "error" : "+101"

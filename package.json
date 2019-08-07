@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "bucklescript": "0.0.2",
-    "bs-markdown-it": "enspirit/bs-markdown-it"
+    "bs-markdown-it": "enspirit/bs-markdown-it",
+    "bs-mustache": "enspirit/bs-mustache"
   }
 }
