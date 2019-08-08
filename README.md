@@ -1,5 +1,5 @@
-# reasonml-starter
-A reason ML project starter showing how to use some external bindings.
+# doc-e-mate in BuckleScript
+A command-line version of doc-e-mate written in BuckleScript using mustache and markdown-it JS libraries.
 
 Once cloned, run the following command for initializing the dev environment:
 `npm install`. It might be necessary to run `npm install bs-platform` first.

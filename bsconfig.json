@@ -1,10 +1,14 @@
 {
-  "name": "reasonml-starter",
+  "name": "dem-bs",
   "version": "0.1.0",
   "sources": [
     {
         "dir" : "src",
         "subdirs" : true
+    },
+    {
+        "dir": "__tests__",
+        "type": "dev"
     }
   ],
   "package-specs": {
@@ -13,7 +17,7 @@
   },
   "suffix": ".bs.js",
   "bs-dependencies": ["bs-markdown-it", "bs-mustache"],
-  "bs-dev-dependencies": [],
+  "bs-dev-dependencies": ["@glennsl/bs-jest"],
   "warnings": {
     "error" : "+101"
   },

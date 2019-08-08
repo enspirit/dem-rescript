@@ -1,19 +1,39 @@
 {
-  "name": "reasonml-starter",
+  "name": "dem-bs",
   "version": "0.1.0",
-  "description": "ReasonML starter",
+  "description": "Doc-e-mate in BuckleScript",
   "main": "index.js",
+  "homepage": "https://github.com/enspirit/dem-bs#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/enspirit/dem-bs.git"
+  },
   "author": "ygu",
   "license": "ISC",
+  "keywords": [
+    "reason",
+    "bucklescript",
+    "markdown",
+    "mustache",
+    "doc-e-mate"
+  ],
   "scripts": {
     "clean": "bsb -clean-world",
     "build": "bsb -make-world",
     "watch": "bsb -make-world -w",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "devDependencies": {
-    "bs-platform": "^5.0.6"
+    "@glennsl/bs-jest": "^0.4.9",
+    "bs-platform": "^5.0.6",
+    "jest": "^24.8.0"
   },
+  "jest": {
+    "testURL": "http://localhost/"
+  },
+  "files": [
+    "bsconfig.json"
+  ],
   "dependencies": {
     "bucklescript": "0.0.2",
     "bs-markdown-it": "enspirit/bs-markdown-it",

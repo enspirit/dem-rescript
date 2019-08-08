@@ -1,9 +1,14 @@
-let markdownIt = MarkdownIt.createMarkdownIt();
+external jsonToObj : Js.Json.t => Js.t({..}) = "%identity";
 
-Js.log(MarkdownIt.render(markdownIt, "# Bucklescript executes markdown-it."));
+let markdownItInstance = MarkdownIt.createMarkdownIt();
+let markdownIt = (text) => MarkdownIt.render(markdownItInstance, text);
 
-Js.log(Mustache.render(
-          "{{executer}} executes {{executed}}.",
-          { "executer" : "Bucklescript", "executed" : "Mustache" }
-        )
-      );
+let mustache = Mustache.render;
+
+let md_text = Node.Fs.readFileAsUtf8Sync("index.md");
+let json_data = Node.Fs.readFileAsUtf8Sync("index.json") -> Js.Json.parseExn;
+let js_data = jsonToObj(json_data);
+
+let res = mustache(md_text, js_data) -> markdownIt;
+
+Js.log(res);
