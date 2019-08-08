@@ -1,0 +1,10 @@
+<html>
+  <head>
+    <style>
+      {{{compiled_style}}}
+    </style>
+  </head>
+  <body>
+    {{{compiled_body}}}
+  </body>
+</html>
