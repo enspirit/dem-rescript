@@ -1,4 +1,5 @@
 {
   "executer": "Bucklescript",
-  "executed" : "Mustache"
+  "executed" : "Mustache",
+  "data_format": "json"
 }
