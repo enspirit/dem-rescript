@@ -40,5 +40,8 @@
     "bs-markdown-it": "enspirit/bs-markdown-it",
     "bs-mustache": "enspirit/bs-mustache",
     "bs-yaml": "^1.0.2"
+  },
+  "bin": {
+    "dem": "src/main.bs.js"
   }
 }
