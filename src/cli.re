@@ -6,41 +6,35 @@ let version = () => {
 };
 
 /*** File readers *************************************************************/
-let read_text_file = (filename) => Node.Fs.readFileAsUtf8Sync(filename);
+let read_text_file = filename => Node.Fs.readFileAsUtf8Sync(filename);
 
-let read_json_data_file = (filename) => {
-  Node.Fs.readFileAsUtf8Sync(filename)
-  |> Js.Json.parseExn
-}
+let read_json_data_file = filename => {
+  Node.Fs.readFileAsUtf8Sync(filename) |> Js.Json.parseExn;
+};
 
-let read_yaml_data_file = (filename) => {
-  Node.Fs.readFileAsUtf8Sync(filename)
-  -> Yaml.yamlParse()
-}
+let read_yaml_data_file = filename => {
+  Node.Fs.readFileAsUtf8Sync(filename) -> Yaml.yamlParse();
+};
 
-let read_data_file = (data_filename_opt) => {
-  let json = switch(data_filename_opt) {
-  | None =>
-    if (Node.Fs.existsSync("index.json.yml")) {
-      read_yaml_data_file("index.json.yml");
-    } else {
-      read_json_data_file("index.json");
-    }
+let read_data_file = data_filename_opt => {
+  let json = switch (data_filename_opt) {
+  | None when Node.Fs.existsSync("index.json.yml") => read_yaml_data_file("index.json.yml");
+  | None => read_json_data_file("index.json");
   | Some(data_filename) =>
     let last_point = Js.String2.lastIndexOf(".", data_filename);
-    let file_ext = Js.String.sliceToEnd(last_point, data_filename);
+    let file_ext = Js.String.sliceToEnd(~from=last_point, data_filename);
     switch (file_ext) {
     | "yml" => read_yaml_data_file(data_filename)
     | "json" => read_json_data_file(data_filename)
     };
   };
   json;
-}
+};
 
 /*** Commands *************************************************************/
 let compiled_body = (text_filename, data_filename) => {
   App.compile_body(read_text_file(text_filename), read_data_file(None));
-}
+};
 
 type verb =
   | Normal
@@ -55,12 +49,12 @@ type copts = {
 
 let str = Printf.sprintf;
 
-let opt_str = (sv) =>
+let opt_str = sv =>
   fun
   | None => "None"
   | Some(v) => str("Some(%s)", sv(v));
 
-let opt_str_str = opt_str((s) => s);
+let opt_str_str = opt_str(s => s);
 
 let verb_str =
   fun
@@ -77,26 +71,26 @@ let pr_copts = (oc, copts) =>
     opt_str_str(copts.prehook)
   );
 
-let default_compilation = (copts) => {
+let default_compilation = _ => {
   `Ok(Js.log(compiled_body));
-}
+};
 
-let compile = (copts, ctf, csf, text_filename, data_filename) => {
+let compile = (_, ctf, csf, text_filename, data_filename) => {
   let compilation_template = Node.Fs.readFileAsUtf8Sync(ctf);
   let compiled_style = Node.Fs.readFileAsUtf8Sync(csf);
   let text = read_text_file(text_filename);
   let data = read_data_file(data_filename);
 
-  let res = App.compile(compilation_template, compiled_style, text, data)
+  let res = App.compile(compilation_template, compiled_style, text, data);
   Js.log(res);
-}
+};
 
 let help = (_, man_format, cmds, topic) =>
-  switch topic {
+  switch (topic) {
   | None => `Help((`Pager, None)) /* help about the program. */
   | Some(topic) =>
     let topics = ["topics", "patterns", "environment", ...cmds];
-    let (conv, _) = Cmdliner.Arg.enum(List.rev_map((s) => (s, s), topics));
+    let (conv, _) = Cmdliner.Arg.enum(List.rev_map(s => (s, s), topics));
     switch (conv(topic)) {
     | `Error(e) => `Error((false, e))
     | `Ok(t) when t == "topics" =>
@@ -151,35 +145,50 @@ let compile_cmd = {
   let ctf = {
     let doc = "Filename of the compilation template.";
     let docv = "COMPILATION_TEMPLATE_FILENAME";
-    Cmdliner.Arg.(value & opt(string, "index.html.tpl") & info(["ctf", "compilation-template-filename"], ~docv, ~doc));
+    Cmdliner.Arg.(
+      value
+      & opt(string, "index.html.tpl")
+      & info(["ctf", "compilation-template-filename"], ~docv, ~doc)
+    );
   };
   let csf = {
     let doc = "Filename of the compilation style.";
     let docv = "COMPILATION_STYLE_FILENAME";
-    Cmdliner.Arg.(value & opt(string, "index.css") & info(["csf", "compilation-style-filename"], ~docv, ~doc));
+    Cmdliner.Arg.(
+      value
+      & opt(string, "index.css")
+      & info(["csf", "compilation-style-filename"], ~docv, ~doc)
+    );
   };
   let text_filename = {
     let doc = "Text filename.";
     let docv = "TEXT_FILENAME";
-    Cmdliner.Arg.(value & opt(string, "index.md") & info(["T", "text-filename"], ~docv, ~doc));
+    Cmdliner.Arg.(
+      value
+      & opt(string, "index.md")
+      & info(["T", "text-filename"], ~docv, ~doc)
+    );
   };
   let data_filename = {
     let doc = "Data filename.";
     let docv = "DATA_FILENAME";
-    Cmdliner.Arg.(value & opt(some(string), None) & info(["D", "data-filename"], ~docv, ~doc));
+    Cmdliner.Arg.(
+      value
+      & opt(some(string), None)
+      & info(["D", "data-filename"], ~docv, ~doc)
+    );
   };
   let doc = "compiles files in current directory";
+  let sdocs = Cmdliner.Manpage.s_common_options;
   let exits = Cmdliner.Term.default_exits;
   let man = [
     `S(Cmdliner.Manpage.s_description),
-    `P(
-      "Compiles files ..."
-    ),
+    `P("Compiles files ..."),
     `Blocks(help_secs)
   ];
   (
     Cmdliner.Term.(const(compile) $ copts_t $ ctf $ csf $ text_filename $ data_filename),
-    Cmdliner.Term.info("compile", ~doc, ~sdocs=Cmdliner.Manpage.s_common_options, ~exits, ~man)
+    Cmdliner.Term.info("compile", ~doc, ~sdocs, ~exits, ~man)
   );
 };
 
