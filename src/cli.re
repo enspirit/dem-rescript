@@ -36,19 +36,18 @@ let read_yaml_data_file = filename => {
 };
 
 let read_data_file = data_filename_opt => {
-  let json_opt = switch (data_filename_opt) {
+  switch (data_filename_opt) {
   | None when Node.Fs.existsSync("index.json.yml") => read_yaml_data_file("index.json.yml");
   | None => read_json_data_file("index.json");
   | Some(data_filename) =>
     let last_point = Js.String2.lastIndexOf(".", data_filename);
     let file_ext = Js.String.sliceToEnd(~from=last_point, data_filename);
     switch (file_ext) {
-    | "yml" => read_yaml_data_file(data_filename)
-    | "json" => read_json_data_file(data_filename)
-    | _ => None
+    | "yml" => read_yaml_data_file(data_filename);
+    | "json" => read_json_data_file(data_filename);
+    | _ => None;
     };
   };
-  json_opt;
 };
 
 let read_compilation_template = filename => {
@@ -108,7 +107,7 @@ let default_compilation = _ => {
   };
 };
 
-let compile = (_, ctf, csf, text_filename, data_filename) => {
+let compile = (_, ctf, csf, text_filename, data_filename_opt) => {
   switch (read_compilation_template(ctf)) {
   | None => `Error((false, "fatal error while reading compilation template file."));
   | Some(compilation_template) =>
@@ -118,7 +117,7 @@ let compile = (_, ctf, csf, text_filename, data_filename) => {
       switch (read_text_file(text_filename)) {
       | None => `Error((false, "fatal error while reading text file."));
       | Some(text) =>
-        switch (read_data_file(data_filename)) {
+        switch (read_data_file(data_filename_opt)) {
         | None => `Error((false, "fatal error while reading data file."));
         | Some(data) =>
           let res = App.compile(compilation_template, compiled_style, text, data);
@@ -192,7 +191,7 @@ let compile_cmd = {
     Cmdliner.Arg.(
       value
       & opt(string, "index.html.tpl")
-      & info(["ctf", "compilation-template-filename"], ~docv, ~doc)
+      & info(["t", "compilation-template-filename"], ~docv, ~doc)
     );
   };
   let csf = {
@@ -201,7 +200,7 @@ let compile_cmd = {
     Cmdliner.Arg.(
       value
       & opt(string, "index.css")
-      & info(["csf", "compilation-style-filename"], ~docv, ~doc)
+      & info(["s", "compilation-style-filename"], ~docv, ~doc)
     );
   };
   let text_filename = {
