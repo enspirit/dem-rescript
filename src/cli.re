@@ -5,61 +5,6 @@ let version = () => {
   print_endline("Doc-e-mate in BuckleScript 0.1.0");
 };
 
-/*** File readers *************************************************************/
-let robust_file_reading = (what, filename) => {
-  Js.log({j|Reading $what from "$filename".|j});
-  try (Some(Node.Fs.readFileAsUtf8Sync(filename))) {
-  | Caml_js_exceptions.Error(e) =>
-    Js.log({j|$e.|j});
-    None
-  };
-}
-
-let read_text_file = filename => {
-  robust_file_reading("text", filename);
-}
-
-let read_json_data_file = filename => {
-  let content = robust_file_reading("data", filename);
-  switch (content) {
-  | None => None
-  | Some(data) => Some(Js.Json.parseExn(data));
-  };
-};
-
-let read_yaml_data_file = filename => {
-  let content = robust_file_reading("data", filename);
-  switch (content) {
-  | None => None
-  | Some(data) => Some(data -> Yaml.yamlParse());
-  };
-};
-
-let read_data_file = data_filename_opt => {
-  switch (data_filename_opt) {
-  | None when Node.Fs.existsSync("index.json.yml") => read_yaml_data_file("index.json.yml");
-  | None => read_json_data_file("index.json");
-  | Some(data_filename) =>
-    let ext_pos = String.rindex(data_filename, '.') + 1;
-    let ext_size = String.length(data_filename) - ext_pos;
-    let file_ext = String.sub(data_filename, ext_pos, ext_size);
-    switch (file_ext) {
-    | "yml" => read_yaml_data_file(data_filename);
-    | "json" => read_json_data_file(data_filename);
-    | _ => None;
-    };
-  };
-};
-
-let read_compilation_template = filename => {
-  robust_file_reading("compilation template", filename);
-}
-
-let read_compilation_style = filename => {
-  robust_file_reading("compilation style", filename);
-}
-
-/*** CLI Specification *******************************************************/
 type verb =
   | Normal
   | Quiet
@@ -96,10 +41,10 @@ let pr_copts = (oc, copts) =>
   );
 
 let default_compilation = _ => {
-  switch (read_text_file("index.md")) {
+  switch (File.read_text("index.md")) {
   | None => `Error((false, "fatal error while reading text file."));
   | Some(text) =>
-    switch (read_data_file(None)) {
+    switch (File.read_data(None)) {
     | None => `Error((false, "fatal error while reading data file."));
     | Some(data) =>
       let compiled_body = App.compile_body(text, data);
@@ -109,16 +54,16 @@ let default_compilation = _ => {
 };
 
 let compile = (_, ctf, csf, text_filename, data_filename_opt) => {
-  switch (read_compilation_template(ctf)) {
+  switch (File.read_compilation_template(ctf)) {
   | None => `Error((false, "fatal error while reading compilation template file."));
   | Some(compilation_template) =>
-    switch (read_compilation_style(csf)) {
+    switch (File.read_compilation_style(csf)) {
     | None => `Error((false, "fatal error while reading compilation style file."));
     | Some(compiled_style) =>
-      switch (read_text_file(text_filename)) {
+      switch (File.read_text(text_filename)) {
       | None => `Error((false, "fatal error while reading text file."));
       | Some(text) =>
-        switch (read_data_file(data_filename_opt)) {
+        switch (File.read_data(data_filename_opt)) {
         | None => `Error((false, "fatal error while reading data file."));
         | Some(data) =>
           let res = App.compile(compilation_template, compiled_style, text, data);
