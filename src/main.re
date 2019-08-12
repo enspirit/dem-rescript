@@ -13,31 +13,57 @@ let markdownIt = (text) => MarkdownIt.render(markdownItInstance, text);
 
 let mustache = Mustache.render;
 
-/*** File readers *************************************************************/
-let text = Node.Fs.readFileAsUtf8Sync("index.md");
+let compile_body = (text, js_data) => mustache(text, js_data) |> markdownIt;
 
-let read_json_data = () => {
-  Node.Fs.readFileAsUtf8Sync("index.json")
+let compile_body = (text, json_data) => {
+  let js_data = json_data |> jsonToObj;
+  compile_body(text, js_data);
+}
+
+let compile = (compilation_template, compiled_style, text, data) => {
+  let compiled_body = compile_body(text, data);
+  mustache(compilation_template, {
+    "compiled_style": compiled_style,
+    "compiled_body": compiled_body
+  })
+}
+
+/*** File readers *************************************************************/
+let read_text_file = (filename) => Node.Fs.readFileAsUtf8Sync(filename);
+
+let read_json_data_file = (filename) => {
+  Node.Fs.readFileAsUtf8Sync(filename)
   |> Js.Json.parseExn
 }
 
-let read_yaml_data = () => {
-  Node.Fs.readFileAsUtf8Sync("index.json.yml")
+let read_yaml_data_file = (filename) => {
+  Node.Fs.readFileAsUtf8Sync(filename)
   -> Yaml.yamlParse()
 }
 
-let read_data = () => {
-  if (Node.Fs.existsSync("index.json.yml")) {
-    read_yaml_data();
-  } else {
-    read_json_data();
-  }
+let read_data_file = (data_filename_opt) => {
+  let json = switch(data_filename_opt) {
+  | None =>
+    if (Node.Fs.existsSync("index.json.yml")) {
+      read_yaml_data_file("index.json.yml");
+    } else {
+      read_json_data_file("index.json");
+    }
+  | Some(data_filename) =>
+    let last_point = Js.String2.lastIndexOf(".", data_filename);
+    let file_ext = Js.String.sliceToEnd(last_point, data_filename);
+    switch (file_ext) {
+    | "yml" => read_yaml_data_file(data_filename)
+    | "json" => read_json_data_file(data_filename)
+    };
+  };
+  json;
 }
 
-let data = read_data() |> jsonToObj;
-
 /*** Commands *************************************************************/
-let compiled_body = mustache(text, data) |> markdownIt;
+let compiled_body = (text_filename, data_filename) => {
+  compile_body(read_text_file(text_filename), read_data_file(None));
+}
 
 type verb =
   | Normal
@@ -78,14 +104,14 @@ let default_compilation = (copts) => {
   `Ok(Js.log(compiled_body));
 }
 
-let compile = (copts) => {
-  let compilation_template = Node.Fs.readFileAsUtf8Sync("index.html.tpl");
-  let compiled_style = Node.Fs.readFileAsUtf8Sync("index.css");
 
-  let res = mustache(compilation_template, {
-    "compiled_style": compiled_style,
-    "compiled_body": compiled_body
-  })
+let compile = (copts, ctf, csf, text_filename, data_filename) => {
+  let compilation_template = Node.Fs.readFileAsUtf8Sync(ctf);
+  let compiled_style = Node.Fs.readFileAsUtf8Sync(csf);
+  let text = read_text_file(text_filename);
+  let data = read_data_file(data_filename);
+
+  let res = compile(compilation_template, compiled_style, text, data)
   Js.log(res);
 }
 
@@ -146,6 +172,26 @@ let copts_t = {
 
 /* Commands */
 let compile_cmd = {
+  let ctf = {
+    let doc = "Filename of the compilation template.";
+    let docv = "COMPILATION_TEMPLATE_FILENAME";
+    Cmdliner.Arg.(value & opt(string, "index.html.tpl") & info(["ctf", "compilation-template-filename"], ~docv, ~doc));
+  };
+  let csf = {
+    let doc = "Filename of the compilation style.";
+    let docv = "COMPILATION_STYLE_FILENAME";
+    Cmdliner.Arg.(value & opt(string, "index.css") & info(["csf", "compilation-style-filename"], ~docv, ~doc));
+  };
+  let text_filename = {
+    let doc = "Text filename.";
+    let docv = "TEXT_FILENAME";
+    Cmdliner.Arg.(value & opt(string, "index.md") & info(["T", "text-filename"], ~docv, ~doc));
+  };
+  let data_filename = {
+    let doc = "Data filename.";
+    let docv = "DATA_FILENAME";
+    Cmdliner.Arg.(value & opt(some(string), None) & info(["D", "data-filename"], ~docv, ~doc));
+  };
   let doc = "compiles files in current directory";
   let exits = Cmdliner.Term.default_exits;
   let man = [
@@ -156,7 +202,7 @@ let compile_cmd = {
     `Blocks(help_secs)
   ];
   (
-    Cmdliner.Term.(const(compile) $ copts_t),
+    Cmdliner.Term.(const(compile) $ copts_t $ ctf $ csf $ text_filename $ data_filename),
     Cmdliner.Term.info("compile", ~doc, ~sdocs=Cmdliner.Manpage.s_common_options, ~exits, ~man)
   );
 };
