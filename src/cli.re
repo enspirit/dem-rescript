@@ -40,8 +40,9 @@ let read_data_file = data_filename_opt => {
   | None when Node.Fs.existsSync("index.json.yml") => read_yaml_data_file("index.json.yml");
   | None => read_json_data_file("index.json");
   | Some(data_filename) =>
-    let last_point = Js.String2.lastIndexOf(".", data_filename);
-    let file_ext = Js.String.sliceToEnd(~from=last_point, data_filename);
+    let ext_pos = String.rindex(data_filename, '.') + 1;
+    let ext_size = String.length(data_filename) - ext_pos;
+    let file_ext = String.sub(data_filename, ext_pos, ext_size);
     switch (file_ext) {
     | "yml" => read_yaml_data_file(data_filename);
     | "json" => read_json_data_file(data_filename);
