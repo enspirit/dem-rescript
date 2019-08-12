@@ -6,6 +6,11 @@ let markdownIt = text => MarkdownIt.render(markdownItInstance, text);
 
 let mustache = Mustache.render;
 
+type t_compilation_template = string;
+type t_style = string;
+type t_text = string;
+type t_data = Js.Json.t;
+
 let compile_body = (text, js_data) => mustache(text, js_data) |> markdownIt;
 
 let compile_body = (text, json_data) => {
