@@ -3,3 +3,4 @@ lib
 node_modules
 .bsb.lock
 *.bs.js
+.atom
