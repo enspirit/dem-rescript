@@ -37,9 +37,10 @@
   "dependencies": {
     "npm": "^6.10.3",
     "bucklescript": "0.0.2",
-    "bs-markdown-it": "enspirit/bs-markdown-it",
+    "@elliottcable/bs-cmdliner": "^1.0.2",
+    "bs-yaml": "^1.0.2",
     "bs-mustache": "enspirit/bs-mustache",
-    "bs-yaml": "^1.0.2"
+    "bs-markdown-it": "enspirit/bs-markdown-it"
   },
   "bin": {
     "dem": "src/main.bs.js"
