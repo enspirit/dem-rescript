@@ -6,7 +6,9 @@ Once cloned, run the following command for initializing the dev environment:
 
 Then, you can build the program with `npm run build`.
 
-And run it with `node src/cli.bs.js`.
+You can run the tests using `npm run test`.
+
+And run the program with `node src/cli.bs.js`.
 
 Note: the `npm run build` command automatically prepends a node shebang
 `#!/usr/bin/env node` in the generated javascript command-line interface
