@@ -32,10 +32,6 @@ let read_data_file = data_filename_opt => {
 };
 
 /*** Commands *************************************************************/
-let compiled_body = (text_filename, data_filename) => {
-  App.compile_body(read_text_file(text_filename), read_data_file(None));
-};
-
 type verb =
   | Normal
   | Quiet
@@ -72,6 +68,9 @@ let pr_copts = (oc, copts) =>
   );
 
 let default_compilation = _ => {
+  let text = read_text_file("index.md");
+  let data = read_data_file(None);
+  let compiled_body = App.compile_body(text, data);
   `Ok(Js.log(compiled_body));
 };
 
@@ -216,7 +215,11 @@ let default_cmd = {
   let man = [
     `S(Cmdliner.Manpage.s_description),
     `P(
-      "Automatically mustache and markdown the text and data \n       files in the current directory."
+      "Automatically mustache and markdown the text and data \n
+       files in the current directory. \n
+       Text file: index.md \n
+       Data file: index.json.yml if it exists, \n
+       otherwise: index.json "
     ),
     `Blocks(help_secs)
   ];
