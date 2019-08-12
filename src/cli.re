@@ -5,29 +5,6 @@ let version = () => {
   print_endline("Doc-e-mate in BuckleScript 0.1.0");
 };
 
-// Convert Json to Js Object \!/ without type safety \!/
-external jsonToObj : Js.Json.t => Js.t({..}) = "%identity";
-
-let markdownItInstance = MarkdownIt.createMarkdownIt();
-let markdownIt = (text) => MarkdownIt.render(markdownItInstance, text);
-
-let mustache = Mustache.render;
-
-let compile_body = (text, js_data) => mustache(text, js_data) |> markdownIt;
-
-let compile_body = (text, json_data) => {
-  let js_data = json_data |> jsonToObj;
-  compile_body(text, js_data);
-}
-
-let compile = (compilation_template, compiled_style, text, data) => {
-  let compiled_body = compile_body(text, data);
-  mustache(compilation_template, {
-    "compiled_style": compiled_style,
-    "compiled_body": compiled_body
-  })
-}
-
 /*** File readers *************************************************************/
 let read_text_file = (filename) => Node.Fs.readFileAsUtf8Sync(filename);
 
@@ -62,7 +39,7 @@ let read_data_file = (data_filename_opt) => {
 
 /*** Commands *************************************************************/
 let compiled_body = (text_filename, data_filename) => {
-  compile_body(read_text_file(text_filename), read_data_file(None));
+  App.compile_body(read_text_file(text_filename), read_data_file(None));
 }
 
 type verb =
@@ -104,14 +81,13 @@ let default_compilation = (copts) => {
   `Ok(Js.log(compiled_body));
 }
 
-
 let compile = (copts, ctf, csf, text_filename, data_filename) => {
   let compilation_template = Node.Fs.readFileAsUtf8Sync(ctf);
   let compiled_style = Node.Fs.readFileAsUtf8Sync(csf);
   let text = read_text_file(text_filename);
   let data = read_data_file(data_filename);
 
-  let res = compile(compilation_template, compiled_style, text, data)
+  let res = App.compile(compilation_template, compiled_style, text, data)
   Js.log(res);
 }
 

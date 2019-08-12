@@ -43,6 +43,6 @@
     "bs-markdown-it": "enspirit/bs-markdown-it"
   },
   "bin": {
-    "dem": "src/main.bs.js"
+    "dem": "src/cli.bs.js"
   }
 }
