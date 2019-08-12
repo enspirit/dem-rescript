@@ -6,18 +6,37 @@ let version = () => {
 };
 
 /*** File readers *************************************************************/
-let read_text_file = filename => Node.Fs.readFileAsUtf8Sync(filename);
+let robust_file_reading = (what, filename) => {
+  Js.log({j|Reading $what from "$filename".|j});
+  try (Some(Node.Fs.readFileAsUtf8Sync(filename))) {
+  | Caml_js_exceptions.Error(e) =>
+    Js.log({j|$e.|j});
+    None
+  };
+}
+
+let read_text_file = filename => {
+  robust_file_reading("text", filename);
+}
 
 let read_json_data_file = filename => {
-  Node.Fs.readFileAsUtf8Sync(filename) |> Js.Json.parseExn;
+  let content = robust_file_reading("data", filename);
+  switch (content) {
+  | None => None
+  | Some(data) => Some(Js.Json.parseExn(data));
+  };
 };
 
 let read_yaml_data_file = filename => {
-  Node.Fs.readFileAsUtf8Sync(filename) -> Yaml.yamlParse();
+  let content = robust_file_reading("data", filename);
+  switch (content) {
+  | None => None
+  | Some(data) => Some(data -> Yaml.yamlParse());
+  };
 };
 
 let read_data_file = data_filename_opt => {
-  let json = switch (data_filename_opt) {
+  let json_opt = switch (data_filename_opt) {
   | None when Node.Fs.existsSync("index.json.yml") => read_yaml_data_file("index.json.yml");
   | None => read_json_data_file("index.json");
   | Some(data_filename) =>
@@ -26,12 +45,21 @@ let read_data_file = data_filename_opt => {
     switch (file_ext) {
     | "yml" => read_yaml_data_file(data_filename)
     | "json" => read_json_data_file(data_filename)
+    | _ => None
     };
   };
-  json;
+  json_opt;
 };
 
-/*** Commands *************************************************************/
+let read_compilation_template = filename => {
+  robust_file_reading("compilation template", filename);
+}
+
+let read_compilation_style = filename => {
+  robust_file_reading("compilation style", filename);
+}
+
+/*** CLI Specification *******************************************************/
 type verb =
   | Normal
   | Quiet
@@ -68,20 +96,37 @@ let pr_copts = (oc, copts) =>
   );
 
 let default_compilation = _ => {
-  let text = read_text_file("index.md");
-  let data = read_data_file(None);
-  let compiled_body = App.compile_body(text, data);
-  `Ok(Js.log(compiled_body));
+  switch (read_text_file("index.md")) {
+  | None => `Error((false, "fatal error while reading text file."));
+  | Some(text) =>
+    switch (read_data_file(None)) {
+    | None => `Error((false, "fatal error while reading data file."));
+    | Some(data) =>
+      let compiled_body = App.compile_body(text, data);
+      `Ok(Js.log(compiled_body));
+    };
+  };
 };
 
 let compile = (_, ctf, csf, text_filename, data_filename) => {
-  let compilation_template = Node.Fs.readFileAsUtf8Sync(ctf);
-  let compiled_style = Node.Fs.readFileAsUtf8Sync(csf);
-  let text = read_text_file(text_filename);
-  let data = read_data_file(data_filename);
-
-  let res = App.compile(compilation_template, compiled_style, text, data);
-  Js.log(res);
+  switch (read_compilation_template(ctf)) {
+  | None => `Error((false, "fatal error while reading compilation template file."));
+  | Some(compilation_template) =>
+    switch (read_compilation_style(csf)) {
+    | None => `Error((false, "fatal error while reading compilation style file."));
+    | Some(compiled_style) =>
+      switch (read_text_file(text_filename)) {
+      | None => `Error((false, "fatal error while reading text file."));
+      | Some(text) =>
+        switch (read_data_file(data_filename)) {
+        | None => `Error((false, "fatal error while reading data file."));
+        | Some(data) =>
+          let res = App.compile(compilation_template, compiled_style, text, data);
+          `Ok(Js.log(res));
+        };
+      };
+    };
+  };
 };
 
 let help = (_, man_format, cmds, topic) =>
@@ -139,7 +184,7 @@ let copts_t = {
   Cmdliner.Term.(const(copts) $ debug $ verb $ prehook);
 };
 
-/* Commands */
+/* Commands in cmdliner format */
 let compile_cmd = {
   let ctf = {
     let doc = "Filename of the compilation template.";
@@ -186,7 +231,7 @@ let compile_cmd = {
     `Blocks(help_secs)
   ];
   (
-    Cmdliner.Term.(const(compile) $ copts_t $ ctf $ csf $ text_filename $ data_filename),
+    Cmdliner.Term.(ret(const(compile) $ copts_t $ ctf $ csf $ text_filename $ data_filename)),
     Cmdliner.Term.info("compile", ~doc, ~sdocs, ~exits, ~man)
   );
 };
@@ -229,5 +274,9 @@ let default_cmd = {
   );
 };
 
+// Available legal commands.
 let cmds = [help_cmd, compile_cmd]; //version_cmd
+
+// Execute default command if no argument given to default_cmd
+// Otherwise, execute the specified command.
 let () = Cmdliner.Term.(exit @@ eval_choice(default_cmd, cmds));
