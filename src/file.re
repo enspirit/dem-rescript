@@ -1,8 +1,8 @@
 let robust_read = (what, filename) => {
-  Js.log({j|Reading $what from "$filename".|j});
+  Pervasives.prerr_string({j|Reading $what from "$filename".|j});
   try (Some(Node.Fs.readFileAsUtf8Sync(filename))) {
   | Caml_js_exceptions.Error(e) =>
-    Js.log({j|$e.|j});
+    Pervasives.prerr_string({j|$e.|j});
     None
   };
 }
