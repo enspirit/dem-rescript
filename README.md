@@ -4,9 +4,11 @@ This repository holds the `dem` commandline tool, that allows your to generate
 and print documents written in Markdown, styled in CSS, with business data
 injected from JSON or YAML files.
 
+```
 > Text     + Data  + Style  ->  Beautiful Business Documents
 > HTML     + Json  + CSS    ->  Beautiful Business Documents
 > Markdown + YAML  + SASS   ->  Beautiful Maintainable Business Document
+```
 
 ## Examples
 
