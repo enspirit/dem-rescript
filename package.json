@@ -45,6 +45,6 @@
     "bs-prettier": "enspirit/bs-prettier"
   },
   "bin": {
-    "dem": "src/cli.bs.js"
+    "dem": "bin/dem"
   }
 }

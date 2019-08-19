@@ -27,8 +27,5 @@
   "warnings": {
     "error" : "+101"
   },
-  "refmt": 3,
-  "js-post-build": {
-    "cmd": "/bin/sed -i '1 i\\#!/usr/bin/env node'"
-  }
+  "refmt": 3
 }
