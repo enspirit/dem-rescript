@@ -11,7 +11,7 @@ type t_style = string;
 type t_text = string;
 type t_data = Js.Json.t;
 
-let compile_body = (text, js_data) => mustache(text, js_data) |> markdownIt;
+let compile_body = (text, js_data) => mustache(text, js_data) |> markdownIt |> Prettier.format;
 
 let compile_body = (text, json_data) => {
   let js_data = json_data |> jsonToObj;
@@ -23,5 +23,6 @@ let compile = (compilation_template, compiled_style, text, data) => {
   mustache(compilation_template, {
     "compiled_style": compiled_style,
     "compiled_body": compiled_body
-  });
+  })
+  |> Prettier.format;
 };

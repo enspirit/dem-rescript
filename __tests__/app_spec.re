@@ -38,13 +38,13 @@ let () =
 
         test("#compile_body", () => {
             expect(App.compile_body(text, json_data))
-            |> toBe("<h1>BuckleScript executes Mustache using json data.</h1>\n")
+            |> toBe("<h1>BuckleScript executes Mustache using json data.</h1>")
           }
         );
 
         test("#compile_body", () => {
             expect(App.compile_body(text, yaml_data))
-            |> toBe("<h1>BuckleScript executes Mustache using yaml data.</h1>\n")
+            |> toBe("<h1>BuckleScript executes Mustache using yaml data.</h1>")
           }
         );
 
@@ -61,7 +61,6 @@ let () =
   </head>
   <body>
     <h1>BuckleScript executes Mustache using json data.</h1>
-
   </body>
 </html>|})
           }
