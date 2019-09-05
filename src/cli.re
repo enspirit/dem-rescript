@@ -41,37 +41,19 @@ let pr_copts = (oc, copts) =>
   );
 
 let default_compilation = _ => {
-  switch (File.read_text("index.md")) {
-  | None => `Error((false, "fatal error while reading text file."));
-  | Some(text) =>
-    switch (File.read_data(None)) {
-    | None => `Error((false, "fatal error while reading data file."));
-    | Some(data) =>
-      let compiled_body = App.compile_body(text, data);
-      `Ok(Js.log(compiled_body));
-    };
-  };
+  let text_opt = File.read_text("index.md");
+  let data_opt = File.read_data(None);
+  let compiled_body = App.compile_body(text_opt, data_opt);
+  `Ok(Js.log(compiled_body));
 };
 
-let compile = (_, ctf, csf, text_filename, data_filename_opt) => {
-  switch (File.read_compilation_template(ctf)) {
-  | None => `Error((false, "fatal error while reading compilation template file."));
-  | Some(compilation_template) =>
-    switch (File.read_compilation_style(csf)) {
-    | None => `Error((false, "fatal error while reading compilation style file."));
-    | Some(compiled_style) =>
-      switch (File.read_text(text_filename)) {
-      | None => `Error((false, "fatal error while reading text file."));
-      | Some(text) =>
-        switch (File.read_data(data_filename_opt)) {
-        | None => `Error((false, "fatal error while reading data file."));
-        | Some(data) =>
-          let res = App.compile(compilation_template, compiled_style, text, data);
-          `Ok(Js.log(res));
-        };
-      };
-    };
-  };
+let compile = (_, ctf_opt, csf_opt, text_filename_opt, data_filename_opt) => {
+  let template_opt = File.read_compilation_template(ctf_opt);
+  let style_opt = File.read_compilation_style(csf_opt);
+  let text_opt = File.read_text(text_filename_opt);
+  let data_opt = File.read_data(data_filename_opt);
+  let res = App.compile(template_opt, style_opt, text_opt, data_opt);
+  `Ok(Js.log(res));
 };
 
 let help = (_, man_format, cmds, topic) =>
