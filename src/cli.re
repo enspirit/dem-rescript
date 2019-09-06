@@ -154,7 +154,13 @@ let compile_cmd = {
   let exits = Cmdliner.Term.default_exits;
   let man = [
     `S(Cmdliner.Manpage.s_description),
-    `P("Compiles files ..."),
+    `P("Generates and prints documents written in Markdown, styled in CSS, with business data injected from
+        JSON or YAML files. By default, compiles text, data, template and style files in the current directory.
+        Text file: specified one or index.md if it exists, or empty content otherwise.
+        Data file: specified one or index.json.yml if it exists, or index.json if it exists,
+                   or empty data otherwise.
+        Template file: specified one or index.html.tpl if it exists, or a very basic html structure otherwise.
+        Style file: specified one or index.css if it exists, or empty style otherwise."),
     `Blocks(help_secs)
   ];
   (
@@ -181,17 +187,17 @@ let help_cmd = {
 };
 
 let default_cmd = {
-  let doc = "dem compiles text and data of current directory.";
+  let doc = "Doc-e-mate - your document's best friend.";
   let sdocs = Cmdliner.Manpage.s_common_options;
   let exits = Cmdliner.Term.default_exits;
   let man = [
     `S(Cmdliner.Manpage.s_description),
     `P(
-      "Automatically mustache and markdown the text and data \n
-       files in the current directory. \n
-       Text file: index.md \n
-       Data file: index.json.yml if it exists, \n
-       otherwise: index.json "
+      "Generates and prints documents written in Markdown, styled in CSS, with business data injected from
+       JSON or YAML files. By default, when dem is called without any command, it just compiles the text and
+       data files in the current directory without any style nor template.
+       Text file: index.md if it exists, or empty content otherwise.
+       Data file: index.json.yml if it exists, or index.json if it exists, or empty data otherwise."
     ),
     `Blocks(help_secs)
   ];
