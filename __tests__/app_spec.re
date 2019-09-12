@@ -7,6 +7,25 @@ let () =
       () => {
         let text = "# {{executer}} executes {{executed}} using {{data_format}} data.";
 
+        let more_structured_text = {|# Title
+
+Some introduction ...
+
+## Section 1 title
+
+Some paragraph ...
+
+### Subsection title
+
+Some paragraph ...
+
+## Section 2 title
+
+Some paragraph ...
+
+Another paragraph ...
+|}
+
         let json_data = Js.Json.parseExn({|{
           "executer": "BuckleScript",
           "executed": "Mustache",
@@ -50,21 +69,44 @@ let () =
 
         test("#compile_body works with default when no data given", () => {
             expect(App.compile_body(Some(text), None))
-            |> toBe({|<h1>executes using data.</h1>
+            |> toBe({|<article><h1>executes using data.</h1></article>
 |})
           }
         );
 
         test("#compile_body works with json data", () => {
             expect(App.compile_body(Some(text), Some(json_data)))
-            |> toBe({|<h1>BuckleScript executes Mustache using json data.</h1>
+            |> toBe({|<article><h1>BuckleScript executes Mustache using json data.</h1></article>
 |})
           }
         );
 
         test("#compile_body works with yaml data", () => {
             expect(App.compile_body(Some(text), Some(yaml_data)))
-            |> toBe({|<h1>BuckleScript executes Mustache using yaml data.</h1>
+            |> toBe({|<article><h1>BuckleScript executes Mustache using yaml data.</h1></article>
+|})
+          }
+        );
+
+        test("#compile_body correctly inject article and section tags with more structured text", () => {
+            expect(App.compile_body(Some(more_structured_text), None))
+            |> toBe({|<article>
+  <h1>Title</h1>
+  <p>Some introduction ...</p>
+  <section>
+    <h2>Section 1 title</h2>
+    <p>Some paragraph ...</p>
+    <section>
+      <h3>Subsection title</h3>
+      <p>Some paragraph ...</p>
+    </section>
+  </section>
+  <section>
+    <h2>Section 2 title</h2>
+    <p>Some paragraph ...</p>
+    <p>Another paragraph ...</p>
+  </section>
+</article>
 |})
           }
         );
@@ -110,7 +152,7 @@ let () =
     </style>
   </head>
   <body>
-    <h1>executes using data.</h1>
+    <article><h1>executes using data.</h1></article>
   </body>
 </html>
 |})
@@ -146,7 +188,7 @@ let () =
     </style>
   </head>
   <body>
-    <h1>BuckleScript executes Mustache using json data.</h1>
+    <article><h1>BuckleScript executes Mustache using json data.</h1></article>
   </body>
 </html>
 |})
