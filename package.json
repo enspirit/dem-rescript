@@ -41,7 +41,8 @@
     "@elliottcable/bs-cmdliner": "^1.0.2",
     "bs-yaml": "^1.0.2",
     "bs-mustache": "enspirit/bs-mustache",
-    "bs-markdown-it": "enspirit/bs-markdown-it"
+    "bs-markdown-it": "enspirit/bs-markdown-it",
+    "bs-prettier": "enspirit/bs-prettier"
   },
   "bin": {
     "dem": "src/cli.bs.js"

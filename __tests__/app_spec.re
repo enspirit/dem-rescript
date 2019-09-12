@@ -50,19 +50,22 @@ let () =
 
         test("#compile_body works with default when no data given", () => {
             expect(App.compile_body(Some(text), None))
-            |> toBe("<h1>executes  using  data.</h1>")
+            |> toBe({|<h1>executes using data.</h1>
+|})
           }
         );
 
         test("#compile_body works with json data", () => {
             expect(App.compile_body(Some(text), Some(json_data)))
-            |> toBe("<h1>BuckleScript executes Mustache using json data.</h1>")
+            |> toBe({|<h1>BuckleScript executes Mustache using json data.</h1>
+|})
           }
         );
 
         test("#compile_body works with yaml data", () => {
             expect(App.compile_body(Some(text), Some(yaml_data)))
-            |> toBe("<h1>BuckleScript executes Mustache using yaml data.</h1>")
+            |> toBe({|<h1>BuckleScript executes Mustache using yaml data.</h1>
+|})
           }
         );
 
@@ -70,33 +73,28 @@ let () =
             expect(App.compile(None, None, None, None))
             |> toBe({|<html>
   <head>
-    <style>
-    </style>
+    <style></style>
   </head>
-  <body>
-  </body>
-</html>|});
+  <body></body>
+</html>
+|});
           }
         );
 
         test("#compile works with default when no body given", () => {
-            expect(
-              Js.String.trim(
-                App.compile(Some(template), Some(style), None, Some(json_data))
-              )
-            )
+            expect(App.compile(Some(template), Some(style), None, Some(json_data)))
             |> toBe(
 {|<html>
   <head>
     <style>
       h1 {
-  color: green;
-}
+        color: green;
+      }
     </style>
   </head>
-  <body>
-  </body>
-</html>|})
+  <body></body>
+</html>
+|})
           }
         );
 
@@ -107,31 +105,32 @@ let () =
   <head>
     <style>
       h1 {
-  color: green;
-}
+        color: green;
+      }
     </style>
   </head>
   <body>
-    <h1>executes  using  data.</h1>
+    <h1>executes using data.</h1>
   </body>
-</html>|})
+</html>
+|})
           }
         );
 
-        test("#compile works with default when no data given", () => {
+        test("#compile works with default when no text given", () => {
             expect(App.compile(Some(template), Some(style), None, Some(json_data)))
             |> toBe(
 {|<html>
   <head>
     <style>
       h1 {
-  color: green;
-}
+        color: green;
+      }
     </style>
   </head>
-  <body>
-  </body>
-</html>|})
+  <body></body>
+</html>
+|})
           }
         );
 
@@ -142,14 +141,15 @@ let () =
   <head>
     <style>
       h1 {
-  color: green;
-}
+        color: green;
+      }
     </style>
   </head>
   <body>
     <h1>BuckleScript executes Mustache using json data.</h1>
   </body>
-</html>|})
+</html>
+|})
           }
         );
       }

@@ -20,7 +20,8 @@
     "@elliottcable/bs-cmdliner",
     "bs-yaml",
     "bs-mustache",
-    "bs-markdown-it"
+    "bs-markdown-it",
+    "bs-prettier"
   ],
   "bs-dev-dependencies": ["@glennsl/bs-jest"],
   "warnings": {

@@ -32,9 +32,14 @@ let or_else = (opt, default) => {
   }
 }
 
+// syntactic sugar
 let (||) = (opt, default) => or_else(opt, default);
 
-let compile_body = (text, js_data) => mustache(text, js_data) |> markdownIt |> Prettier.format;
+let compile_body = (text, js_data) => {
+  mustache(text, js_data)
+  |> markdownIt
+  |> Formatter.format
+};
 
 let compile_body = (text, json_data) => {
   let text = text || default_text;
@@ -51,5 +56,5 @@ let compile = (compilation_template, compiled_style, text, data) => {
     "compiled_style": compiled_style,
     "compiled_body": compiled_body
   })
-  |> Prettier.format;
+  |> Formatter.format;
 };
