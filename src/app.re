@@ -48,23 +48,36 @@ let with_semantics_tags = text => {
     };
   };
 
-  let insert_tag = (~close=false, i) => {
-    let polarity = close ? "</" : "<";
-    switch (i) {
-    | 1 => polarity ++ "article>"
-    | i when i > 1 => polarity ++ "section>"
+  let tag = (~id=None, level) => {
+    let (on, off) = {
+      switch (id) {
+      | None => ("</", ">")
+      | Some(id) => ("<", " id=\"" ++ id ++ "\">")
+      }
+    };
+    switch (level) {
+    | 1 => on ++ "article" ++ off
+    | level when level > 1 => on ++ "section" ++ off
     | _ => ""
     };
   };
 
-  let rec insert_tags = (l, levels, s) => switch (l) {
+  let id = (text_pieces) => Some(switch (text_pieces) {
+  | [] => ""
+  | [hd, ..._] =>
+    let closing_tag_pos = Js.String.search([%re "/<\/h[1-9]>/"], hd);
+    Js.String.slice(~from=0, ~to_=closing_tag_pos, hd)
+    |> Formatter.to_html_id
+  });
+
+  let rec insert_tags = (text_pieces, levels, s) => switch (text_pieces) {
   | [] => s
-  | [x] when List.length(levels) > 0 => s ++ x ++ String.concat("", List.map(insert_tag(~close=true), levels))
+  | [piece] when List.length(levels) > 0 => s ++ piece ++ String.concat("", List.map(tag, levels))
   | [hd, ...tl] => switch (html_title_tag_level(hd), levels) {
     | (0, _) => insert_tags (tl, levels, s ++ hd)
-    | (i, []) => insert_tags (tl, [i], s ++ insert_tag(i) ++ hd)
-    | (i, [highest, ..._]) when i > highest => insert_tags (tl, [i, ...levels], s ++ insert_tag(i) ++ hd)
-    | (_, [highest, ...rem_levels]) => insert_tags (l, rem_levels, s ++ insert_tag(~close=true, highest))
+    | (i, []) => insert_tags (tl, [i], s ++ tag(~id=id(tl), i) ++ hd)
+    | (i, [highest, ..._]) when i > highest => insert_tags (tl, [i, ...levels], s ++ tag(~id=id(tl), i) ++ hd)
+    | (_, [highest, ...rem_levels]) => insert_tags (text_pieces, rem_levels, s ++ tag(highest))
     };
   };
 

@@ -69,39 +69,43 @@ Another paragraph ...
 
         test("#compile_body works with default when no data given", () => {
             expect(App.compile_body(Some(text), None))
-            |> toBe({|<article><h1>executes using data.</h1></article>
+            |> toBe({|<article id="executes-using-data"><h1>executes using data.</h1></article>
 |})
           }
         );
 
         test("#compile_body works with json data", () => {
             expect(App.compile_body(Some(text), Some(json_data)))
-            |> toBe({|<article><h1>BuckleScript executes Mustache using json data.</h1></article>
+            |> toBe({|<article id="bucklescript-executes-mustache-using-json-data">
+  <h1>BuckleScript executes Mustache using json data.</h1>
+</article>
 |})
           }
         );
 
         test("#compile_body works with yaml data", () => {
             expect(App.compile_body(Some(text), Some(yaml_data)))
-            |> toBe({|<article><h1>BuckleScript executes Mustache using yaml data.</h1></article>
+            |> toBe({|<article id="bucklescript-executes-mustache-using-yaml-data">
+  <h1>BuckleScript executes Mustache using yaml data.</h1>
+</article>
 |})
           }
         );
 
         test("#compile_body correctly inject article and section tags with more structured text", () => {
             expect(App.compile_body(Some(more_structured_text), None))
-            |> toBe({|<article>
+            |> toBe({|<article id="title">
   <h1>Title</h1>
   <p>Some introduction ...</p>
-  <section>
+  <section id="section-1-title">
     <h2>Section 1 title</h2>
     <p>Some paragraph ...</p>
-    <section>
+    <section id="subsection-title">
       <h3>Subsection title</h3>
       <p>Some paragraph ...</p>
     </section>
   </section>
-  <section>
+  <section id="section-2-title">
     <h2>Section 2 title</h2>
     <p>Some paragraph ...</p>
     <p>Another paragraph ...</p>
@@ -152,7 +156,7 @@ Another paragraph ...
     </style>
   </head>
   <body>
-    <article><h1>executes using data.</h1></article>
+    <article id="executes-using-data"><h1>executes using data.</h1></article>
   </body>
 </html>
 |})
@@ -188,7 +192,9 @@ Another paragraph ...
     </style>
   </head>
   <body>
-    <article><h1>BuckleScript executes Mustache using json data.</h1></article>
+    <article id="bucklescript-executes-mustache-using-json-data">
+      <h1>BuckleScript executes Mustache using json data.</h1>
+    </article>
   </body>
 </html>
 |})
