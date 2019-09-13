@@ -2,7 +2,7 @@ open Jest;
 
 let () =
   describe(
-    "prettier",
+    "formatter",
     ExpectJs.(
       () => {
         let core = "Don't touch me. Because I'm already pretty. That's all folks.\n";
