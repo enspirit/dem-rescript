@@ -5,6 +5,35 @@ let () =
     "formatter",
     ExpectJs.(
       () => {
+        let accented = {js|C'est - tout à fait _ édifiant toùt ça!|js}
+        let no_accent = "C'est - tout a fait _ edifiant tout ca!"
+        let no_punctuation = "Cest - tout a fait  edifiant tout ca"
+        let html_id_friendly = "cest-tout-a-fait-edifiant-tout-ca"
+
+        test("#to_html_id works 1", () => {
+            expect(Formatter.to_html_id(accented))
+            |> toBe(html_id_friendly)
+          }
+        );
+
+        test("#to_html_id works 2", () => {
+            expect(Formatter.to_html_id(no_accent))
+            |> toBe(html_id_friendly)
+          }
+        );
+
+        test("#to_html_id works 3", () => {
+            expect(Formatter.to_html_id(no_punctuation))
+            |> toBe(html_id_friendly)
+          }
+        );
+
+        test("#to_html_id works 4", () => {
+            expect(Formatter.to_html_id(html_id_friendly))
+            |> toBe(html_id_friendly)
+          }
+        );
+
         let core = "Don't touch me. Because I'm already pretty. That's all folks.\n";
 
         let leading_spaces = " " ++ core;
