@@ -5,41 +5,6 @@ let version = () => {
   print_endline("Doc-e-mate in BuckleScript 0.1.0");
 };
 
-type verb =
-  | Normal
-  | Quiet
-  | Verbose;
-
-type copts = {
-  debug: bool,
-  verb,
-  prehook: option(string)
-};
-
-let str = Printf.sprintf;
-
-let opt_str = sv =>
-  fun
-  | None => "None"
-  | Some(v) => str("Some(%s)", sv(v));
-
-let opt_str_str = opt_str(s => s);
-
-let verb_str =
-  fun
-  | Normal => "normal"
-  | Quiet => "quiet"
-  | Verbose => "verbose";
-
-let pr_copts = (oc, copts) =>
-  Printf.fprintf(
-    oc,
-    "debug = %B\nverbosity = %s\nprehook = %s\n",
-    copts.debug,
-    verb_str(copts.verb),
-    opt_str_str(copts.prehook)
-  );
-
 let default_compilation = _ => {
   let text_opt = File.read_text("index.md");
   let data_opt = File.read_data(None);
@@ -89,26 +54,8 @@ let help_secs = [
 ];
 
 /* Options common to all commands */
-let copts = (debug, verb, prehook) => {debug, verb, prehook};
-
 let copts_t = {
-  let docs = Cmdliner.Manpage.s_common_options;
-  let debug = {
-    let doc = "Give only debug output.";
-    Cmdliner.Arg.(value & flag & info(["debug"], ~docs, ~doc));
-  };
-  let verb = {
-    let doc = "Suppress informational output.";
-    let quiet = (Quiet, Cmdliner.Arg.info(["q", "quiet"], ~docs, ~doc));
-    let doc = "Give verbose output.";
-    let verbose = (Verbose, Cmdliner.Arg.info(["v", "verbose"], ~docs, ~doc));
-    Cmdliner.Arg.(last & vflag_all([Normal], [quiet, verbose]));
-  };
-  let prehook = {
-    let doc = "Specify command to run before this $(mname) command.";
-    Cmdliner.Arg.(value & opt(some(string), None) & info(["prehook"], ~docs, ~doc));
-  };
-  Cmdliner.Term.(const(copts) $ debug $ verb $ prehook);
+  Cmdliner.Term.(const());
 };
 
 /* Commands in cmdliner format */
