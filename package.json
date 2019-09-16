@@ -39,7 +39,7 @@
   "dependencies": {
     "npm": "^6.10.3",
     "bucklescript": "0.0.2",
-    "@elliottcable/bs-cmdliner": "enspirit/bs-cmdliner",
+    "@elliottcable/bs-cmdliner": "^10.2.1",
     "bs-yaml": "^1.0.2",
     "bs-mustache": "enspirit/bs-mustache",
     "bs-markdown-it": "enspirit/bs-markdown-it",
