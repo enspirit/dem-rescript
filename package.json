@@ -1,5 +1,5 @@
 {
-  "name": "dem-bs",
+  "name": "@enspirit/dem-bs",
   "version": "0.1.0",
   "description": "Doc-e-mate in BuckleScript",
   "main": "index.js",
@@ -37,13 +37,16 @@
     "bsconfig.json"
   ],
   "dependencies": {
-    "npm": "^6.10.3",
-    "bucklescript": "0.0.2",
-    "@elliottcable/bs-cmdliner": "^1.0.2",
-    "bs-yaml": "^1.0.2",
-    "bs-mustache": "enspirit/bs-mustache",
+    "@elliottcable/bs-cmdliner": "^10.2.1",
     "bs-markdown-it": "enspirit/bs-markdown-it",
-    "bs-prettier": "enspirit/bs-prettier"
+    "bs-mustache": "enspirit/bs-mustache",
+    "bs-prettier": "enspirit/bs-prettier",
+    "bs-yaml": "^1.0.2",
+    "bucklescript": "0.0.2",
+    "npm": "^6.10.3"
+  },
+  "peerDependencies": {
+    "bs-platform": "5.x"
   },
   "bin": {
     "dem": "bin/dem"
