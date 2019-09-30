@@ -45,9 +45,6 @@
     "bucklescript": "0.0.2",
     "npm": "^6.10.3"
   },
-  "peerDependencies": {
-    "bs-platform": "5.x"
-  },
   "bin": {
     "dem": "bin/dem"
   }
