@@ -1,6 +1,6 @@
 {
   "name": "@enspirit/dem-bs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Doc-e-mate in BuckleScript",
   "main": "index.js",
   "homepage": "https://github.com/enspirit/dem-bs#readme",
