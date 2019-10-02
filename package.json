@@ -2,7 +2,10 @@
   "name": "@enspirit/dem-bs",
   "version": "0.1.2",
   "description": "Doc-e-mate in BuckleScript",
-  "main": "index.js",
+  "main": "./src/cli.bs.js",
+  "bin": {
+    "dem": "bin/dem"
+  },
   "homepage": "https://github.com/enspirit/dem-bs#readme",
   "repository": {
     "type": "git",
@@ -44,8 +47,5 @@
     "bs-yaml": "^1.0.2",
     "bucklescript": "0.0.2",
     "npm": "^6.10.3"
-  },
-  "bin": {
-    "dem": "bin/dem"
   }
 }
