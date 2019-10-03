@@ -2,7 +2,7 @@
   "name": "@enspirit/dem-bs",
   "version": "0.1.3",
   "description": "Doc-e-mate in BuckleScript",
-  "main": "./src/cli.bs.js",
+  "main": "src/cli.bs.js",
   "bin": {
     "dem": "bin/dem"
   },
@@ -21,7 +21,7 @@
     "doc-e-mate"
   ],
   "scripts": {
-    "prepublish": "npm run build",
+    "prepare": "npm run build",
     "clean": "bsb -clean-world",
     "build": "bsb -make-world",
     "watch": "bsb -make-world -w",
@@ -36,9 +36,6 @@
   "jest": {
     "testURL": "http://localhost/"
   },
-  "files": [
-    "bsconfig.json"
-  ],
   "dependencies": {
     "@elliottcable/bs-cmdliner": "^10.2.1",
     "@enspirit/bs-markdown-it": "^0.3.1",
