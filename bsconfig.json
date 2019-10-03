@@ -19,9 +19,9 @@
   "bs-dependencies": [
     "@elliottcable/bs-cmdliner",
     "bs-yaml",
-    "bs-mustache",
-    "bs-markdown-it",
-    "bs-prettier"
+    "@enspirit/bs-mustache",
+    "@enspirit/bs-markdown-it",
+    "@enspirit/bs-prettier"
   ],
   "bs-dev-dependencies": ["@glennsl/bs-jest"],
   "warnings": {

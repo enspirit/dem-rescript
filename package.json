@@ -41,9 +41,9 @@
   ],
   "dependencies": {
     "@elliottcable/bs-cmdliner": "^10.2.1",
-    "bs-markdown-it": "^0.2.1",
-    "bs-mustache": "^0.2.0",
-    "bs-prettier": "^0.2.0",
+    "@enspirit/bs-markdown-it": "^0.3.1",
+    "@enspirit/bs-mustache": "^0.3.2",
+    "@enspirit/bs-prettier": "^0.3.0",
     "bs-yaml": "^1.0.2",
     "bucklescript": "0.0.2",
     "npm": "^6.10.3"
