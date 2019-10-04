@@ -50,7 +50,7 @@ let help_secs = [
   `Noblank,
   `P("Use `$(mname) help environment' for help on environment variables."),
   `S(Cmdliner.Manpage.s_bugs),
-  `P("Please report bugs at https://enspirit.be")
+  `P("Please report bugs at https://github.com/enspirit/dem-bs")
 ];
 
 /* Options common to all commands */
