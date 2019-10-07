@@ -9,56 +9,88 @@ let close = () => {
   Logger.save();
 };
 
+// common options type
 type copts = {
-  ctf: string,
-  csf: string,
+  template_filename: string,
+  style_filename: string,
   text_filename: string,
-  data_filename: option(string)
+  data_filename_opt: option(string),
+  watch_mode: bool,
+  output_filename_opt: option(string)
+};
+
+type t_src = {
+  template_opt: option(string),
+  style_opt: option(string),
+  text_opt: option(string),
+  data_opt: option(Js.Json.t),
+  html: string
 };
 
 /****************************************************************************
  * Functions called by CLI commands and connected to the app API
  */
-let default_compilation = _ => {
-  try {
-    let text_filename = "index.md";
-    let text_opt = File.read_text(text_filename);
-    let data_opt = File.read_data(None);
-    let root_partials_dep = App.partials_dependencies(text_opt || "")
-    let partials = File.build_partials(~root=text_filename, root_partials_dep);
-    let compiled_body = App.compile_body(text_opt, data_opt, Some(partials));
-    close();
-    `Ok(Js.log(compiled_body));
-  } {
-  | e => `Error(false, Logger.format_exn(e));
+let write_or_print_html = (output_filename_opt, text_filename, html) => {
+  switch(output_filename_opt) {
+  | None => Js.log(html);
+  | Some(output_filename) => File.write_html(~output_filename, text_filename, html); ();
   }
-};
+}
 
-let compile_ = (ctf, csf, text_filename, data_filename_opt) => {
-  let template_opt = File.read_compilation_template(ctf);
-  let style_opt = File.read_compilation_style(csf);
+let update_text = (src, text_filename) => {
   let text_opt = File.read_text(text_filename);
-  let data_opt = File.read_data(data_filename_opt);
   let root_partials_dep = App.partials_dependencies(text_opt || "");
   let partials = File.build_partials(~root=text_filename, root_partials_dep);
-  App.compile(template_opt, style_opt, text_opt, data_opt, Some(partials));
+  let html = App.compile(src.template_opt, src.style_opt, text_opt, src.data_opt, Some(partials));
+  {...src, html };
+}
+
+let read_and_compile_all = (copts) => {
+  let template_opt = File.read_template(copts.template_filename);
+  let style_opt = File.read_style(copts.style_filename);
+  let text_opt = File.read_text(copts.text_filename);
+  let data_opt = File.read_data(copts.data_filename_opt);
+  let root_partials_dep = App.partials_dependencies(text_opt || "");
+  let partials = File.build_partials(~root=copts.text_filename, root_partials_dep);
+  let html = App.compile(template_opt, style_opt, text_opt, data_opt, Some(partials));
+  { template_opt, style_opt, text_opt, data_opt, html };
+}
+
+let read_compile_and_print = (copts, print) => {
+  let src = read_and_compile_all(copts);
+  print(copts, src);
+  if (Node.Fs.existsSync(copts.text_filename) && copts.watch_mode) {
+    let watcher = Node.Fs.Watch.watch(copts.text_filename)();
+    let change_handler = (. event: string, changed_file: Node.string_buffer) => {
+      let (_, changed_filename) = Node.test(changed_file);
+      let new_src = update_text(src, copts.text_filename);
+      print(copts, new_src);
+    };
+    // let error_handler = (. ()) => Js.log("Watch error !!");
+    let _ = watcher
+    -> Node.Fs.Watch.on_(`change(change_handler));
+    // -> Node.Fs.Watch.on_(`error(error_handler));
+  }
 }
 
 let compile = (copts) => {
   try {
-    let res = compile_(copts.ctf, copts.csf, copts.text_filename, copts.data_filename);
+    read_compile_and_print(copts, fun (copts, src) => {
+      write_or_print_html(copts.output_filename_opt, copts.text_filename, src.html);
+    });
     close();
-    `Ok(Js.log(res));
+    `Ok();
   } {
   | e => `Error(false, Logger.format_exn(e));
   }
 };
 
-let print = (copts, output_filename_opt) => {
+let print = (copts) => {
   try {
-    let html = compile_(copts.ctf, copts.csf, copts.text_filename, copts.data_filename);
-    let html_filename = File.write_html(copts.text_filename, html);
-    Weasyprint.print(html_filename, output_filename_opt);
+    read_compile_and_print(copts, fun (copts, src) => {
+      let html_filename = File.write_html(copts.text_filename, src.html);
+      Weasyprint.print(html_filename, copts.output_filename_opt);
+    });
     close();
     `Ok(());
   } {
@@ -69,12 +101,19 @@ let print = (copts, output_filename_opt) => {
 /****************************************************************************
  * Functions called by CLI commands that are implemented on the CLI side
  */
-let copts = (ctf, csf, text_filename, data_filename) => {ctf, csf, text_filename, data_filename};
+let copts = (template_filename, style_filename, text_filename, data_filename_opt, watch_mode, output_filename_opt) => {
+  template_filename,
+  style_filename,
+  text_filename,
+  data_filename_opt,
+  watch_mode,
+  output_filename_opt
+};
 
 /* Options common to all commands */
 let copts_t = {
   let docs = Cmdliner.Manpage.s_common_options;
-  let ctf = {
+  let template_filename = {
     let docv = "FILE";
     let doc = "Compile document using HTML template specified in $(docv). If $(docv) does not exist, nor its
       default implicit replacement, a very basic HTML structure will be used instead.";
@@ -84,7 +123,7 @@ let copts_t = {
       & info(["h", "html-template"], ~docv, ~doc)
     );
   };
-  let csf = {
+  let style_filename = {
     let docv = "FILE";
     let doc = "Style document as specified in $(docv). If $(docv) does not exist, nor its default implicit
       replacement, an empty style will be used instead.";
@@ -114,7 +153,24 @@ let copts_t = {
       & info(["d", "data"], ~docv, ~doc)
     );
   };
-  Cmdliner.Term.(const(copts) $ ctf $ csf $ text_filename $ data_filename);
+  let watch_mode = {
+    let doc = "Use watch mode.";
+    Cmdliner.Arg.(
+      value
+      & flag
+      & info(["w", "watch"], ~doc)
+    );
+  };
+  let output_filename = {
+    let docv = "FILE";
+    let doc = "Save document in $(docv). When not used, name the document after the text source file.";
+    Cmdliner.Arg.(
+      value
+      & opt(~vopt=Some("index.html"), some(string), None)
+      & info(["o", "output"], ~docv, ~doc)
+    );
+  };
+  Cmdliner.Term.(const(copts) $ template_filename $ style_filename $ text_filename $ data_filename $ watch_mode $ output_filename);
 };
 
 let help = (_, man_format, cmds, topic) =>
@@ -170,15 +226,6 @@ let compile_cmd = {
 };
 
 let print_cmd = {
- let output_filename = {
-   let docv = "FILE";
-   let doc = "Save PDF document in $(docv). When not used, name the document after the text source file.";
-   Cmdliner.Arg.(
-     value
-     & opt(some(string), None)
-     & info(["o", "output"], ~docv, ~doc)
-   );
- };
  let doc = "print a pdf document after compiling files in current directory";
  let sdocs = Cmdliner.Manpage.s_common_options;
  let exits = Cmdliner.Term.default_exits;
@@ -190,7 +237,7 @@ let print_cmd = {
    `Blocks(help_secs)
  ];
  (
-   Cmdliner.Term.(ret(const(print) $ copts_t $ output_filename)),
+   Cmdliner.Term.(ret(const(print) $ copts_t)),
    Cmdliner.Term.info("print", ~doc, ~sdocs, ~exits, ~man)
  );
 };
@@ -236,4 +283,7 @@ let cmds = [help_cmd, compile_cmd, print_cmd];
 
 // Execute default command if no argument given
 // Otherwise, execute the specified command.
-let () = Cmdliner.Term.(exit @@ eval_choice(default_cmd, cmds));
+let () = switch (Cmdliner.Term.eval_choice(default_cmd, cmds)) {
+| `Error _ => exit(1)
+| _ => ()
+};

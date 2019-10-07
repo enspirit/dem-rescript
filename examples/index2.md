@@ -4,7 +4,7 @@ This is not an introduction.
 
 ## This is not a section title
 
-This is not a paregraph.
+This is not a paragraph.
 
 ### This is not a subsection title
 

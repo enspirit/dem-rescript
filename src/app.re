@@ -107,11 +107,11 @@ let compile_body = (text, json_data) => {
   compile_body(text, js_data);
 };
 
-let compile = (compilation_template, compiled_style, text, data, partials) => {
-  let compilation_template = compilation_template || default_template;
-  let compiled_style = compiled_style || default_style;
+let compile = (template, style, text, data, partials) => {
+  let template = template || default_template;
+  let compiled_style = style || default_style;
   let compiled_body = compile_body(text, data, partials);
-  mustache(compilation_template, {
+  mustache(template, {
     "compiled_style": compiled_style,
     "compiled_body": compiled_body
   }, ~partials?, ())

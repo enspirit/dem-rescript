@@ -67,12 +67,12 @@ let read_data = data_filename_opt => {
   };
 };
 
-let read_compilation_template = filename => {
-  robust_read("compilation template", filename);
+let read_template = filename => {
+  robust_read("template", filename);
 }
 
-let read_compilation_style = filename => {
-  robust_read("compilation style", filename);
+let read_style = filename => {
+  robust_read("style", filename);
 }
 
 let robust_path = (path: string) => {
@@ -130,9 +130,8 @@ let robust_write = (what, filename, content) => {
   };
 }
 
-let write_html = (text_filename, html) => {
-  let basename = Node.Path.basename_ext(text_filename, "md");
-  let filename = basename ++ "html";
-  robust_write("html", filename, html);
-  filename;
+let write_html = (~output_filename=?, text_filename, html) => {
+  let output_filename = output_filename || (Node.Path.basename_ext(text_filename, "md") ++ "html")
+  robust_write("html", output_filename, html);
+  output_filename;
 };
