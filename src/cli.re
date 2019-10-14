@@ -1,10 +1,6 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
-let version = () => {
-  print_endline("Doc-e-mate in BuckleScript 0.1.0");
-};
-
 let default_compilation = _ => {
   let text_opt = File.read_text("index.md");
   let data_opt = File.read_data(None);
