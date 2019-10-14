@@ -27,6 +27,15 @@ let read_yaml_data = filename => {
   };
 };
 
+let read_js_data = filename => {
+  let content = robust_read("data", filename);
+  switch (content) {
+  | None => None
+  | Some(data) =>
+    Some(JSInterpreter.eval(data));
+  }
+};
+
 let extension = filename => {
   let ext_pos = String.rindex(filename, '.') + 1;
   let ext_size = String.length(filename) - ext_pos;
@@ -39,8 +48,9 @@ let read_data = data_filename_opt => {
   | None => read_json_data("index.json");
   | Some(data_filename) =>
     switch (extension(data_filename)) {
-    | "yml" => read_yaml_data(data_filename);
+    | "yml"  => read_yaml_data(data_filename);
     | "json" => read_json_data(data_filename);
+    | "js"   => read_js_data(data_filename);
     | _ => None;
     };
   };

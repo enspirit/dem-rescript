@@ -21,7 +21,8 @@
     "bs-yaml",
     "@enspirit/bs-mustache",
     "@enspirit/bs-markdown-it",
-    "@enspirit/bs-prettier"
+    "@enspirit/bs-prettier",
+    "@enspirit/bs-js-interpreter"
   ],
   "bs-dev-dependencies": ["@glennsl/bs-jest"],
   "warnings": {

@@ -38,6 +38,19 @@ Another paragraph ...
           data_format: yaml
         |} -> Yaml.yamlParse();
 
+        let js_data = [%bs.raw {|{executer: "BuckleScript",
+executed: "Mustache",
+data_format: "js"
+}|}];
+
+        let complex_js_data = [%bs.raw {|function () {
+  var fs = require('fs');
+  var home = require('os').homedir();
+  var dir = home + "/dem-bs/__tests__/resources/";
+  var contents = fs.readFileSync(dir + "index.json", 'utf8');
+  return JSON.parse(contents);
+}|}];
+
         let template =
 {|<html>
   <head>
@@ -194,6 +207,48 @@ Another paragraph ...
   <body>
     <article id="bucklescript-executes-mustache-using-json-data">
       <h1>BuckleScript executes Mustache using json data.</h1>
+    </article>
+  </body>
+</html>
+|})
+          }
+        );
+
+        test("#compile works", () => {
+            expect(App.compile(Some(template), Some(style), Some(text), Some(js_data)))
+            |> toBe(
+{|<html>
+  <head>
+    <style>
+      h1 {
+        color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <article id="bucklescript-executes-mustache-using-js-data">
+      <h1>BuckleScript executes Mustache using js data.</h1>
+    </article>
+  </body>
+</html>
+|})
+          }
+        );
+
+        test("#compile works", () => {
+          expect(App.compile(Some(template), Some(style), Some(text), Some(complex_js_data())))
+          |> toBe(
+{|<html>
+  <head>
+    <style>
+      h1 {
+        color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <article id="bucklescript-executes-mustache-using-complex-js-data">
+      <h1>BuckleScript executes Mustache using complex js data.</h1>
     </article>
   </body>
 </html>

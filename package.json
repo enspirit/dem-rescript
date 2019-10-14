@@ -41,6 +41,7 @@
     "@enspirit/bs-markdown-it": "^0.3.1",
     "@enspirit/bs-mustache": "^0.3.2",
     "@enspirit/bs-prettier": "^0.3.0",
+    "@enspirit/bs-js-interpreter": "^0.1.1",
     "bs-platform": "^5.0.6",
     "bs-yaml": "^1.0.2",
     "bucklescript": "0.0.2",
