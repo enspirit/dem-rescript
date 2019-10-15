@@ -1,23 +1,37 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
+let close = () => {
+  Logger.save();
+};
+
 /****************************************************************************
  * Functions called by CLI commands and connected to the app API
  */
 let default_compilation = _ => {
-  let text_opt = File.read_text("index.md");
-  let data_opt = File.read_data(None);
-  let compiled_body = App.compile_body(text_opt, data_opt);
-  `Ok(Js.log(compiled_body));
+  try {
+    let text_opt = File.read_text("index.md");
+    let data_opt = File.read_data(None);
+    let compiled_body = App.compile_body(text_opt, data_opt);
+    close();
+    `Ok(Js.log(compiled_body));
+  } {
+  | e => `Error(false, Logger.format_exn(e));
+  }
 };
 
 let compile = (_, ctf_opt, csf_opt, text_filename_opt, data_filename_opt) => {
-  let template_opt = File.read_compilation_template(ctf_opt);
-  let style_opt = File.read_compilation_style(csf_opt);
-  let text_opt = File.read_text(text_filename_opt);
-  let data_opt = File.read_data(data_filename_opt);
-  let res = App.compile(template_opt, style_opt, text_opt, data_opt);
-  `Ok(Js.log(res));
+  try {
+    let template_opt = File.read_compilation_template(ctf_opt);
+    let style_opt = File.read_compilation_style(csf_opt);
+    let text_opt = File.read_text(text_filename_opt);
+    let data_opt = File.read_data(data_filename_opt);
+    let res = App.compile(template_opt, style_opt, text_opt, data_opt);
+    close();
+    `Ok(Js.log(res));
+  } {
+  | e => `Error(false, Logger.format_exn(e));
+  }
 };
 
 /****************************************************************************

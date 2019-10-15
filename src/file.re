@@ -1,9 +1,7 @@
 let robust_read = (what, filename) => {
-  // Pervasives.prerr_string({j|Reading $what from "$filename".|j});
+  Logger.info({j|Reading $what from "$filename".|j});
   try (Some(Node.Fs.readFileAsUtf8Sync(filename))) {
-  | Caml_js_exceptions.Error(e) =>
-    // Pervasives.prerr_string({j|$e.|j});
-    None
+  | Caml_js_exceptions.Error(e) => Logger.error @@ Logger.format_caml_js_exn(e); None
   };
 }
 
@@ -15,7 +13,9 @@ let read_json_data = filename => {
   let content = robust_read("data", filename);
   switch (content) {
   | None => None
-  | Some(data) => Some(Js.Json.parseExn(data));
+  | Some(data) => try (Some(Js.Json.parseExn(data))) {
+    | e => Logger.error @@ Logger.format_exn(e); None
+    };
   };
 };
 
@@ -23,7 +23,9 @@ let read_yaml_data = filename => {
   let content = robust_read("data", filename);
   switch (content) {
   | None => None
-  | Some(data) => Some(data -> Yaml.yamlParse());
+  | Some(data) => try (Some(data -> Yaml.yamlParse())) {
+    | e => Logger.error @@ Logger.format_exn(e); None
+    };
   };
 };
 
@@ -31,15 +33,21 @@ let read_js_data = filename => {
   let content = robust_read("data", filename);
   switch (content) {
   | None => None
-  | Some(data) =>
-    Some(JSInterpreter.eval(data));
-  }
+  | Some(data) => try (Some(JSInterpreter.eval(data))) {
+    | e => Logger.error @@ Logger.format_exn(e); None
+    };
+  };
 };
 
 let extension = filename => {
-  let ext_pos = String.rindex(filename, '.') + 1;
-  let ext_size = String.length(filename) - ext_pos;
-  String.sub(filename, ext_pos, ext_size);
+  try {
+    let ext_pos = String.rindex(filename, '.') + 1;
+    let ext_size = String.length(filename) - ext_pos;
+    Some(String.sub(filename, ext_pos, ext_size));
+  } {
+  | Not_found =>
+    Logger.error({j|Extension delimiter not found in $filename|j}); None
+  };
 }
 
 let read_data = data_filename_opt => {
@@ -48,10 +56,11 @@ let read_data = data_filename_opt => {
   | None => read_json_data("index.json");
   | Some(data_filename) =>
     switch (extension(data_filename)) {
-    | "yml"  => read_yaml_data(data_filename);
-    | "json" => read_json_data(data_filename);
-    | "js"   => read_js_data(data_filename);
-    | _ => None;
+    | Some("yml")  => read_yaml_data(data_filename);
+    | Some("json") => read_json_data(data_filename);
+    | Some("js")   => read_js_data(data_filename);
+    | _            =>
+      Logger.error({j|Unsupported extension in $data_filename.|j}); None
     };
   };
 };
