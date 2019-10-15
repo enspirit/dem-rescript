@@ -1,6 +1,9 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
+/****************************************************************************
+ * Functions called by CLI commands and connected to the app API
+ */
 let default_compilation = _ => {
   let text_opt = File.read_text("index.md");
   let data_opt = File.read_data(None);
@@ -17,6 +20,9 @@ let compile = (_, ctf_opt, csf_opt, text_filename_opt, data_filename_opt) => {
   `Ok(Js.log(res));
 };
 
+/****************************************************************************
+ * Functions called by CLI commands that are implemented on the CLI side
+ */
 let help = (_, man_format, cmds, topic) =>
   switch (topic) {
   | None => `Help((`Pager, None)) /* help about the program. */
@@ -54,7 +60,9 @@ let copts_t = {
   Cmdliner.Term.(const());
 };
 
-/* Commands in cmdliner format */
+/****************************************************************************
+ * CLI Command functions in cmdliner format
+ */
 let compile_cmd = {
   let ctf = {
     let doc = "Filename of the compilation template.";
