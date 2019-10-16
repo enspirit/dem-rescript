@@ -6,3 +6,4 @@ let read_js_data: string => option(Js.Json.t);
 let read_data: option(string) => option(Js.Json.t);
 let read_compilation_template: string => option(string);
 let read_compilation_style: string => option(string);
+let build_partials: (~root:string=?, ~partials:Js.Dict.t(string)=?, list(string)) => Js.Dict.t(string);

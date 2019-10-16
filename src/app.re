@@ -12,6 +12,7 @@ type t_template = string;
 type t_style = string;
 type t_text = string;
 type t_data = Js.Json.t;
+type t_partials = Js.Dict.t(string);
 
 let default_text = "";
 let default_data = Js.Json.parseExn("{}");
@@ -26,6 +27,22 @@ let default_template = {|<html>
   </body>
 </html>|};
 let default_style = "";
+
+let partials_dependencies = text => {
+  /* look for `{{> [name]}}` patterns
+   * (which is the syntax for a mustache partial) */
+  let partial_balises = Js.String.match([%re "/{{> .*}}/g"], text);
+  switch (partial_balises) {
+  | None => []
+  | Some(a) =>
+    List.map(s => {
+      switch (Js.String.match([%re "/{{> (.*)}}/"], s)) {
+      | Some([|_, name|]) => [name] // extract the partial name itself
+      | _ => []
+      };
+    }, Array.to_list(a)) |> List.flatten;
+  }
+}
 
 let with_semantics_tags = text => {
   let split_at_html_title_tag = {
@@ -76,8 +93,8 @@ let with_semantics_tags = text => {
   insert_tags(split_at_html_title_tag, [], "");
 }
 
-let compile_body = (text, js_data) => {
-  mustache(text, js_data)
+let compile_body = (text, js_data, partials) => {
+  mustache(text, js_data, ~partials?, ())
   |> markdownIt
   |> with_semantics_tags
   |> Formatter.format
@@ -90,13 +107,13 @@ let compile_body = (text, json_data) => {
   compile_body(text, js_data);
 };
 
-let compile = (compilation_template, compiled_style, text, data) => {
+let compile = (compilation_template, compiled_style, text, data, partials) => {
   let compilation_template = compilation_template || default_template;
   let compiled_style = compiled_style || default_style;
-  let compiled_body = compile_body(text, data);
+  let compiled_body = compile_body(text, data, partials);
   mustache(compilation_template, {
     "compiled_style": compiled_style,
     "compiled_body": compiled_body
-  })
+  }, ~partials?, ())
   |> Formatter.format;
 };

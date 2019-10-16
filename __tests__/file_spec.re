@@ -53,6 +53,30 @@ let () =
             |> toBe(None)
           }
         );
+
+        test("#build_partials works with the empty list", () => {
+            expect(File.build_partials([]))
+            |> toEqual(Js.Dict.empty())
+          }
+        );
+
+        test("#build_partials works with unexisting partials", () => {
+            expect(File.build_partials(["unexisting"]))
+            |> toEqual(Js.Dict.fromList([("unexisting", "")]))
+          }
+        );
+
+        test("#build_partials works with unexisting partials and root", () => {
+            expect(File.build_partials(~root="./unexisting_dir/index.md", ["unexisting"]))
+            |> toEqual(Js.Dict.fromList([("unexisting", "")]))
+          }
+        );
+
+        test("#build_partials works", () => {
+            expect(File.build_partials(~root="__tests__/resources/index2.md", ["follow", "inside/blackhole"]))
+            |> toEqual(Js.Dict.fromList([("follow", "# just {{verb}} it\n"), ("inside/blackhole", "# my name is {{name}}\n")]))
+          }
+        );
       }
     ),
   );

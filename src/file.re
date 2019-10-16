@@ -1,3 +1,5 @@
+open Sugar;
+
 let robust_read = (what, filename) => {
   Logger.info({j|Reading $what from "$filename".|j});
   try (Some(Node.Fs.readFileAsUtf8Sync(filename))) {
@@ -71,4 +73,21 @@ let read_compilation_template = filename => {
 
 let read_compilation_style = filename => {
   robust_read("compilation style", filename);
+}
+
+let rec build_partials = (~root:string=".", ~partials: Js.Dict.t(string)=Js.Dict.empty(), dependencies: list(string)) => {
+  let root_dir = Node.Path.dirname(root);
+  switch (dependencies) {
+  | [] => partials
+  | [key, ...rem_keys] when key == root => build_partials(~root, ~partials, rem_keys)
+  | [key, ...rem_keys] when !has_key(partials, key) => // not in the dictionary yet
+    let path = Node.Path.format({ "dir": root_dir, "name": key, "ext": ".md", "base": "", "root": "" });
+    let content = switch (read_text(path)) {
+    | None => Logger.warn("Using empty string for partial '" ++ key ++ "'."); ""
+    | Some(t) => t
+    };
+    Js.Dict.set(partials, key, content);
+    build_partials(~root, ~partials, rem_keys);
+  | [_, ...rem_keys] => build_partials(~root, ~partials, rem_keys)
+  }
 }

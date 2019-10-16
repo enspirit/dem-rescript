@@ -1,6 +1,8 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
+open Sugar;
+
 let close = () => {
   Logger.save();
 };
@@ -10,9 +12,12 @@ let close = () => {
  */
 let default_compilation = _ => {
   try {
-    let text_opt = File.read_text("index.md");
+    let text_filename = "index.md";
+    let text_opt = File.read_text(text_filename);
     let data_opt = File.read_data(None);
-    let compiled_body = App.compile_body(text_opt, data_opt);
+    let root_partials_dep = App.partials_dependencies(text_opt || "")
+    let partials = File.build_partials(~root=text_filename, root_partials_dep);
+    let compiled_body = App.compile_body(text_opt, data_opt, Some(partials));
     close();
     `Ok(Js.log(compiled_body));
   } {
@@ -20,13 +25,15 @@ let default_compilation = _ => {
   }
 };
 
-let compile = (_, ctf_opt, csf_opt, text_filename_opt, data_filename_opt) => {
+let compile = (_, ctf_opt, csf_opt, text_filename, data_filename_opt) => {
   try {
     let template_opt = File.read_compilation_template(ctf_opt);
     let style_opt = File.read_compilation_style(csf_opt);
-    let text_opt = File.read_text(text_filename_opt);
+    let text_opt = File.read_text(text_filename);
     let data_opt = File.read_data(data_filename_opt);
-    let res = App.compile(template_opt, style_opt, text_opt, data_opt);
+    let root_partials_dep = App.partials_dependencies(text_opt || "");
+    let partials = File.build_partials(~root=text_filename, root_partials_dep);
+    let res = App.compile(template_opt, style_opt, text_opt, data_opt, Some(partials));
     close();
     `Ok(Js.log(res));
   } {

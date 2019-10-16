@@ -19,11 +19,27 @@ Some paragraph ...
 
 Some paragraph ...
 
+{{> another_subsection}}
+
 ## Section 2 title
 
 Some paragraph ...
 
 Another paragraph ...
+
+{{> another_section}}
+|}
+
+        let another_subsection = {|### Another subsection title
+Some paragraph of another subsection ...
+
+Another paragraph of another subsection ...
+|}
+
+        let another_section = {|## Another section title
+Some paragraph of another section ...
+
+Another paragraph of another section ...
 |}
 
         let json_data = Js.Json.parseExn({|{
@@ -68,27 +84,29 @@ data_format: "js"
   color: green;
 }|};
 
+        let partials = Js.Dict.fromList([("another_subsection", another_subsection), ("another_section", another_section)]);
+
         test("#compile_body works with default when empty arguments given", () => {
-            expect(App.compile_body(None, None))
+            expect(App.compile_body(None, None, None))
             |> toBe("")
           }
         );
 
         test("#compile_body works with default when no body given", () => {
-            expect(App.compile_body(None, Some(json_data)))
+            expect(App.compile_body(None, Some(json_data), None))
             |> toBe("")
           }
         );
 
         test("#compile_body works with default when no data given", () => {
-            expect(App.compile_body(Some(text), None))
+            expect(App.compile_body(Some(text), None, None))
             |> toBe({|<article id="executes-using-data"><h1>executes using data.</h1></article>
 |})
           }
         );
 
         test("#compile_body works with json data", () => {
-            expect(App.compile_body(Some(text), Some(json_data)))
+            expect(App.compile_body(Some(text), Some(json_data), None))
             |> toBe({|<article id="bucklescript-executes-mustache-using-json-data">
   <h1>BuckleScript executes Mustache using json data.</h1>
 </article>
@@ -97,7 +115,7 @@ data_format: "js"
         );
 
         test("#compile_body works with yaml data", () => {
-            expect(App.compile_body(Some(text), Some(yaml_data)))
+            expect(App.compile_body(Some(text), Some(yaml_data), None))
             |> toBe({|<article id="bucklescript-executes-mustache-using-yaml-data">
   <h1>BuckleScript executes Mustache using yaml data.</h1>
 </article>
@@ -106,7 +124,7 @@ data_format: "js"
         );
 
         test("#compile_body correctly inject article and section tags with more structured text", () => {
-            expect(App.compile_body(Some(more_structured_text), None))
+            expect(App.compile_body(Some(more_structured_text), None, Some(partials)))
             |> toBe({|<article id="title">
   <h1>Title</h1>
   <p>Some introduction ...</p>
@@ -117,11 +135,21 @@ data_format: "js"
       <h3>Subsection title</h3>
       <p>Some paragraph ...</p>
     </section>
+    <section id="another-subsection-title">
+      <h3>Another subsection title</h3>
+      <p>Some paragraph of another subsection ...</p>
+      <p>Another paragraph of another subsection ...</p>
+    </section>
   </section>
   <section id="section-2-title">
     <h2>Section 2 title</h2>
     <p>Some paragraph ...</p>
     <p>Another paragraph ...</p>
+  </section>
+  <section id="another-section-title">
+    <h2>Another section title</h2>
+    <p>Some paragraph of another section ...</p>
+    <p>Another paragraph of another section ...</p>
   </section>
 </article>
 |})
@@ -129,7 +157,7 @@ data_format: "js"
         );
 
         test("#compile works with default when empty arguments given", () => {
-            expect(App.compile(None, None, None, None))
+            expect(App.compile(None, None, None, None, None))
             |> toBe({|<html>
   <head>
     <style></style>
@@ -141,7 +169,7 @@ data_format: "js"
         );
 
         test("#compile works with default when no body given", () => {
-            expect(App.compile(Some(template), Some(style), None, Some(json_data)))
+            expect(App.compile(Some(template), Some(style), None, Some(json_data), None))
             |> toBe(
 {|<html>
   <head>
@@ -158,7 +186,7 @@ data_format: "js"
         );
 
         test("#compile works with default when no data given", () => {
-            expect(App.compile(Some(template), Some(style), Some(text), None))
+            expect(App.compile(Some(template), Some(style), Some(text), None, None))
             |> toBe(
 {|<html>
   <head>
@@ -177,7 +205,7 @@ data_format: "js"
         );
 
         test("#compile works with default when no text given", () => {
-            expect(App.compile(Some(template), Some(style), None, Some(json_data)))
+            expect(App.compile(Some(template), Some(style), None, Some(json_data), None))
             |> toBe(
 {|<html>
   <head>
@@ -194,7 +222,7 @@ data_format: "js"
         );
 
         test("#compile works", () => {
-            expect(App.compile(Some(template), Some(style), Some(text), Some(json_data)))
+            expect(App.compile(Some(template), Some(style), Some(text), Some(json_data), None))
             |> toBe(
 {|<html>
   <head>
@@ -215,7 +243,7 @@ data_format: "js"
         );
 
         test("#compile works", () => {
-            expect(App.compile(Some(template), Some(style), Some(text), Some(js_data)))
+            expect(App.compile(Some(template), Some(style), Some(text), Some(js_data), None))
             |> toBe(
 {|<html>
   <head>
@@ -236,7 +264,7 @@ data_format: "js"
         );
 
         test("#compile works", () => {
-          expect(App.compile(Some(template), Some(style), Some(text), Some(complex_js_data())))
+          expect(App.compile(Some(template), Some(style), Some(text), Some(complex_js_data()), None))
           |> toBe(
 {|<html>
   <head>
@@ -255,6 +283,18 @@ data_format: "js"
 |})
           }
         );
+
+        test("#partials_dependencies works", () => {
+          expect(App.partials_dependencies(more_structured_text))
+          |> toEqual(["another_subsection", "another_section"])
+        })
+
+        test("#partials_dependencies is empty when there is no partial call", () => {
+          expect(App.partials_dependencies(text))
+          |> toBe([])
+          }
+        );
+
       }
     ),
   );
