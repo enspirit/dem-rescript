@@ -1,6 +1,8 @@
 // Convert Json to Js Object \!/ without type safety \!/
 external jsonToObj: Js.Json.t => Js.t({..}) = "%identity";
 
+open Sugar;
+
 let markdownItInstance = MarkdownIt.createMarkdownIt();
 let markdownIt = text => MarkdownIt.render(markdownItInstance, text);
 
@@ -24,16 +26,6 @@ let default_template = {|<html>
   </body>
 </html>|};
 let default_style = "";
-
-let or_else = (opt, default) => {
-  switch (opt) {
-  | None => default
-  | Some(v) => v
-  }
-}
-
-// syntactic sugar
-let (||) = (opt, default) => or_else(opt, default);
 
 let with_semantics_tags = text => {
   let split_at_html_title_tag = {
