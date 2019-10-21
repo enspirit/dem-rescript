@@ -75,19 +75,50 @@ let read_compilation_style = filename => {
   robust_read("compilation style", filename);
 }
 
+let robust_path = (path: string) => {
+  switch (Node.Fs.existsSync(path)) {
+  | false => None
+  | true => Some(path)
+  }
+}
+
+let robust_dir = (path) => {
+  try (Some(Node.Fs.readdirSync(path))) {
+  | e => Logger.error @@ Logger.format_exn(e); None
+  }
+}
+
+/* returns the path of the given file, relative to the given root */
+let find = (~root:string=".", filepath: string) => {
+  let robust_root = robust_path(root) || ".";
+  let pattern = filepath ++ ".md";
+
+  let root_pattern = Node.Path.format({ "dir": robust_root, "base": pattern, "name": "", "ext": "", "root": "" });
+  switch (Node.Fs.existsSync(root_pattern)) {
+  | true => Some(root_pattern)
+  | false => None
+  }
+}
+
+/* a partial is loaded currently identified
+ * by its path relatively to the root path
+ * (which is the path of the root text file) */
 let rec build_partials = (~root:string=".", ~partials: Js.Dict.t(string)=Js.Dict.empty(), dependencies: list(string)) => {
   let root_dir = Node.Path.dirname(root);
   switch (dependencies) {
   | [] => partials
   | [key, ...rem_keys] when key == root => build_partials(~root, ~partials, rem_keys)
   | [key, ...rem_keys] when !has_key(partials, key) => // not in the dictionary yet
-    let path = Node.Path.format({ "dir": root_dir, "name": key, "ext": ".md", "base": "", "root": "" });
-    let content = switch (read_text(path)) {
+    let content = switch (find(~root=root_dir, key)) {
     | None => Logger.warn("Using empty string for partial '" ++ key ++ "'."); ""
-    | Some(t) => t
+    | Some(path) => switch (read_text(path)) {
+      | None => Logger.warn("Using empty string for partial '" ++ key ++ "'."); ""
+      | Some(c) => c
+      };
     };
+    let dependencies = App.partials_dependencies(content);
     Js.Dict.set(partials, key, content);
-    build_partials(~root, ~partials, rem_keys);
+    build_partials(~root, ~partials, List.rev_append(rem_keys, dependencies));
   | [_, ...rem_keys] => build_partials(~root, ~partials, rem_keys)
   }
 }

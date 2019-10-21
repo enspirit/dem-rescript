@@ -54,6 +54,42 @@ let () =
           }
         );
 
+        test("#find does not return false positive on unexisting path", () => {
+            expect(File.find("unexisting"))
+            |> toBe(None)
+          }
+        );
+
+        test("#find does not return false positive from unexisting directory", () => {
+            expect(File.find(~root="unexisting_dir", "unexisting"))
+            |> toBe(None)
+          }
+        );
+
+        test("#find does not return false positive on unexisting relative path", () => {
+            expect(File.find(~root="__tests__/resources", "unexisting"))
+            |> toBe(None)
+          }
+        );
+
+        test("#find works", () => {
+            expect(File.find("__tests__/resources/index2"))
+            |> toBe(Some("./__tests__/resources/index2.md"))
+          }
+        );
+
+        test("#find works with specified root", () => {
+            expect(File.find(~root="__tests__/resources/inside", "blackhole"))
+            |> toBe(Some("__tests__/resources/inside/blackhole.md"))
+          }
+        );
+
+        test("#find works with path with levels", () => {
+            expect(File.find(~root="__tests__/resources", "inside/blackhole"))
+            |> toBe(Some("__tests__/resources/inside/blackhole.md"))
+          }
+        );
+
         test("#build_partials works with the empty list", () => {
             expect(File.build_partials([]))
             |> toEqual(Js.Dict.empty())
@@ -75,6 +111,17 @@ let () =
         test("#build_partials works", () => {
             expect(File.build_partials(~root="__tests__/resources/index2.md", ["follow", "inside/blackhole"]))
             |> toEqual(Js.Dict.fromList([("follow", "# just {{verb}} it\n"), ("inside/blackhole", "# my name is {{name}}\n")]))
+          }
+        );
+
+        test("#build_partials works with multiple levels of dependency", () => {
+            expect(File.build_partials(~root="__tests__/resources/index3.md", ["follow2", "inside/blackhole2"]))
+            |> toEqual(Js.Dict.fromList([
+              ("follow2", "{{> follow}}\n"),
+              ("inside/blackhole2", "{{> inside/blackhole}}\n"),
+              ("follow", "# just {{verb}} it\n"),
+              ("inside/blackhole", "# my name is {{name}}\n")
+            ]))
           }
         );
       }
