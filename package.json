@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@glennsl/bs-jest": "^0.4.9",
-    "bs-platform": "^5.0.6",
+    "bs-platform": "5.1.0",
     "jest": "^24.8.0"
   },
   "jest": {
@@ -42,7 +42,7 @@
     "@enspirit/bs-mustache": "^0.4.1",
     "@enspirit/bs-prettier": "^0.3.0",
     "@enspirit/bs-js-interpreter": "^0.1.1",
-    "bs-platform": "^5.0.6",
+    "bs-platform": "5.1.0",
     "bs-yaml": "^1.0.2",
     "bucklescript": "0.0.2",
     "npm": "^6.10.3"
