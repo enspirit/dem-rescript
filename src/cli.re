@@ -25,21 +25,37 @@ let default_compilation = _ => {
   }
 };
 
+let compile_ = (ctf_opt, csf_opt, text_filename, data_filename_opt) => {
+  let template_opt = File.read_compilation_template(ctf_opt);
+  let style_opt = File.read_compilation_style(csf_opt);
+  let text_opt = File.read_text(text_filename);
+  let data_opt = File.read_data(data_filename_opt);
+  let root_partials_dep = App.partials_dependencies(text_opt || "");
+  let partials = File.build_partials(~root=text_filename, root_partials_dep);
+  App.compile(template_opt, style_opt, text_opt, data_opt, Some(partials));
+}
+
 let compile = (_, ctf_opt, csf_opt, text_filename, data_filename_opt) => {
   try {
-    let template_opt = File.read_compilation_template(ctf_opt);
-    let style_opt = File.read_compilation_style(csf_opt);
-    let text_opt = File.read_text(text_filename);
-    let data_opt = File.read_data(data_filename_opt);
-    let root_partials_dep = App.partials_dependencies(text_opt || "");
-    let partials = File.build_partials(~root=text_filename, root_partials_dep);
-    let res = App.compile(template_opt, style_opt, text_opt, data_opt, Some(partials));
+    let res = compile_(ctf_opt, csf_opt, text_filename, data_filename_opt);
     close();
     `Ok(Js.log(res));
   } {
   | e => `Error(false, Logger.format_exn(e));
   }
 };
+
+let print = (_, ctf_opt, csf_opt, text_filename, data_filename_opt, output_filename_opt) => {
+  try {
+    let html = compile_(ctf_opt, csf_opt, text_filename, data_filename_opt);
+    let html_filename = File.write_html(text_filename, html);
+    Weasyprint.print(html_filename, output_filename_opt);
+    close();
+    `Ok(());
+  } {
+  | e => `Error(false, Logger.format_exn(e));
+  }
+}
 
 /****************************************************************************
  * Functions called by CLI commands that are implemented on the CLI side
@@ -141,6 +157,73 @@ let compile_cmd = {
   );
 };
 
+let print_cmd = {
+ let ctf = {
+   let doc = "Filename of the compilation template.";
+   let docv = "COMPILATION_TEMPLATE_FILENAME";
+   Cmdliner.Arg.(
+     value
+     & opt(string, "index.html.tpl")
+     & info(["t", "compilation-template-filename"], ~docv, ~doc)
+   );
+ };
+ let csf = {
+   let doc = "Filename of the compilation style.";
+   let docv = "COMPILATION_STYLE_FILENAME";
+   Cmdliner.Arg.(
+     value
+     & opt(string, "index.css")
+     & info(["s", "compilation-style-filename"], ~docv, ~doc)
+   );
+ };
+ let text_filename = {
+   let doc = "Text filename.";
+   let docv = "TEXT_FILENAME";
+   Cmdliner.Arg.(
+     value
+     & opt(string, "index.md")
+     & info(["T", "text-filename"], ~docv, ~doc)
+   );
+ };
+ let data_filename = {
+   let doc = "Data filename.";
+   let docv = "DATA_FILENAME";
+   Cmdliner.Arg.(
+     value
+     & opt(some(string), None)
+     & info(["D", "data-filename"], ~docv, ~doc)
+   );
+ };
+ let output_filename = {
+   let doc = "Output filename.";
+   let docv = "OUTPUT_FILENAME";
+   Cmdliner.Arg.(
+     value
+     & opt(some(string), None)
+     & info(["O", "output-filename"], ~docv, ~doc)
+   );
+ };
+ let doc = "print a pdf document after compiling files in current directory";
+ let sdocs = Cmdliner.Manpage.s_common_options;
+ let exits = Cmdliner.Term.default_exits;
+ let man = [
+   `S(Cmdliner.Manpage.s_description),
+   `P("Prints a PDF document after compiling a doc-e-mate source written with Markdown, styled in CSS, with
+       business data injected from JSON or YAML files. By default, compiles text, data, template and style
+       files in the current directory.
+       Text file: specified one or index.md if it exists, or empty content otherwise.
+       Data file: specified one or index.json.yml if it exists, or index.json if it exists,
+                  or empty data otherwise.
+       Template file: specified one or index.html.tpl if it exists, or a very basic html structure otherwise.
+       Style file: specified one or index.css if it exists, or empty style otherwise."),
+   `Blocks(help_secs)
+ ];
+ (
+   Cmdliner.Term.(ret(const(print) $ copts_t $ ctf $ csf $ text_filename $ data_filename $ output_filename)),
+   Cmdliner.Term.info("print", ~doc, ~sdocs, ~exits, ~man)
+ );
+};
+
 let help_cmd = {
   let topic = {
     let doc = "The topic to get help on. `topics' lists the topics.";
@@ -180,7 +263,7 @@ let default_cmd = {
 };
 
 // Available legal commands.
-let cmds = [help_cmd, compile_cmd]; //version_cmd
+let cmds = [help_cmd, compile_cmd, print_cmd]; //version_cmd
 
 // Execute default command if no argument given to default_cmd
 // Otherwise, execute the specified command.

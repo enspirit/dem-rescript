@@ -8,3 +8,4 @@ let read_compilation_template: string => option(string);
 let read_compilation_style: string => option(string);
 let find: (~root:string=?, string) => option(string);
 let build_partials: (~root:string=?, ~partials:Js.Dict.t(string)=?, list(string)) => Js.Dict.t(string);
+let write_html: (string, string) => string;

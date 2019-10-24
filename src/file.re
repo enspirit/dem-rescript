@@ -122,3 +122,17 @@ let rec build_partials = (~root:string=".", ~partials: Js.Dict.t(string)=Js.Dict
   | [_, ...rem_keys] => build_partials(~root, ~partials, rem_keys)
   }
 }
+
+let robust_write = (what, filename, content) => {
+  Logger.info({j|Writing $what in "$filename".|j});
+  try (Node.Fs.writeFileAsUtf8Sync(filename, content)) {
+  | Caml_js_exceptions.Error(e) => Logger.error @@ Logger.format_caml_js_exn(e); ()
+  };
+}
+
+let write_html = (text_filename, html) => {
+  let basename = Node.Path.basename_ext(text_filename, "md");
+  let filename = basename ++ "html";
+  robust_write("html", filename, html);
+  filename;
+};
