@@ -9,6 +9,13 @@ let close = () => {
   Logger.save();
 };
 
+type copts = {
+  ctf: string,
+  csf: string,
+  text_filename: string,
+  data_filename: option(string)
+};
+
 /****************************************************************************
  * Functions called by CLI commands and connected to the app API
  */
@@ -27,9 +34,9 @@ let default_compilation = _ => {
   }
 };
 
-let compile_ = (ctf_opt, csf_opt, text_filename, data_filename_opt) => {
-  let template_opt = File.read_compilation_template(ctf_opt);
-  let style_opt = File.read_compilation_style(csf_opt);
+let compile_ = (ctf, csf, text_filename, data_filename_opt) => {
+  let template_opt = File.read_compilation_template(ctf);
+  let style_opt = File.read_compilation_style(csf);
   let text_opt = File.read_text(text_filename);
   let data_opt = File.read_data(data_filename_opt);
   let root_partials_dep = App.partials_dependencies(text_opt || "");
@@ -37,9 +44,9 @@ let compile_ = (ctf_opt, csf_opt, text_filename, data_filename_opt) => {
   App.compile(template_opt, style_opt, text_opt, data_opt, Some(partials));
 }
 
-let compile = (_, ctf_opt, csf_opt, text_filename, data_filename_opt) => {
+let compile = (copts) => {
   try {
-    let res = compile_(ctf_opt, csf_opt, text_filename, data_filename_opt);
+    let res = compile_(copts.ctf, copts.csf, copts.text_filename, copts.data_filename);
     close();
     `Ok(Js.log(res));
   } {
@@ -47,10 +54,10 @@ let compile = (_, ctf_opt, csf_opt, text_filename, data_filename_opt) => {
   }
 };
 
-let print = (_, ctf_opt, csf_opt, text_filename, data_filename_opt, output_filename_opt) => {
+let print = (copts, output_filename_opt) => {
   try {
-    let html = compile_(ctf_opt, csf_opt, text_filename, data_filename_opt);
-    let html_filename = File.write_html(text_filename, html);
+    let html = compile_(copts.ctf, copts.csf, copts.text_filename, copts.data_filename);
+    let html_filename = File.write_html(copts.text_filename, html);
     Weasyprint.print(html_filename, output_filename_opt);
     close();
     `Ok(());
@@ -62,47 +69,11 @@ let print = (_, ctf_opt, csf_opt, text_filename, data_filename_opt, output_filen
 /****************************************************************************
  * Functions called by CLI commands that are implemented on the CLI side
  */
-let help = (_, man_format, cmds, topic) =>
-  switch (topic) {
-  | None => `Help((`Pager, None)) /* help about the program. */
-  | Some(topic) =>
-    let topics = ["topics", "patterns", "environment", ...cmds];
-    let (conv, _) = Cmdliner.Arg.enum(List.rev_map(s => (s, s), topics));
-    switch (conv(topic)) {
-    | `Error(e) => `Error((false, e))
-    | `Ok(t) when t == "topics" =>
-      List.iter(print_endline, topics);
-      `Ok();
-    | `Ok(t) when List.mem(t, cmds) => `Help((man_format, Some(t)))
-    | `Ok(_) =>
-      let page = ((topic, 7, "", "", ""), [`S(topic), `P("Say something")]);
-      `Ok(Cmdliner.Manpage.print(man_format, Format.std_formatter, page));
-    };
-  };
-
-/* Help sections common to all commands */
-let help_secs = [
-  `S(Cmdliner.Manpage.s_common_options),
-  `P("These options are common to all commands."),
-  `S("MORE HELP"),
-  `P("Use `$(mname) $(i,COMMAND) --help' for help on a single command."),
-  `Noblank,
-  `P("Use `$(mname) help patterns' for help on patch matching."),
-  `Noblank,
-  `P("Use `$(mname) help environment' for help on environment variables."),
-  `S(Cmdliner.Manpage.s_bugs),
-  `P("Please report bugs at https://github.com/enspirit/dem-bs")
-];
+let copts = (ctf, csf, text_filename, data_filename) => {ctf, csf, text_filename, data_filename};
 
 /* Options common to all commands */
 let copts_t = {
-  Cmdliner.Term.(const());
-};
-
-/****************************************************************************
- * CLI Command functions in cmdliner format
- */
-let compile_cmd = {
+  let docs = Cmdliner.Manpage.s_common_options;
   let ctf = {
     let doc = "Filename of the compilation template.";
     let docv = "COMPILATION_TEMPLATE_FILENAME";
@@ -139,6 +110,45 @@ let compile_cmd = {
       & info(["D", "data-filename"], ~docv, ~doc)
     );
   };
+  Cmdliner.Term.(const(copts) $ ctf $ csf $ text_filename $ data_filename);
+};
+
+let help = (_, man_format, cmds, topic) =>
+  switch (topic) {
+  | None => `Help((`Pager, None)) /* help about the program. */
+  | Some(topic) =>
+    let topics = ["topics", "patterns", "environment", ...cmds];
+    let (conv, _) = Cmdliner.Arg.enum(List.rev_map(s => (s, s), topics));
+    switch (conv(topic)) {
+    | `Error(e) => `Error((false, e))
+    | `Ok(t) when t == "topics" =>
+      List.iter(print_endline, topics);
+      `Ok();
+    | `Ok(t) when List.mem(t, cmds) => `Help((man_format, Some(t)))
+    | `Ok(_) =>
+      let page = ((topic, 7, "", "", ""), [`S(topic), `P("Say something")]);
+      `Ok(Cmdliner.Manpage.print(man_format, Format.std_formatter, page));
+    };
+  };
+
+/* Help sections common to all commands */
+let help_secs = [
+  `S(Cmdliner.Manpage.s_common_options),
+  `P("These options are common to all commands."),
+  `S("MORE HELP"),
+  `P("Use `$(mname) $(i,COMMAND) --help' for help on a single command."),
+  `Noblank,
+  `P("Use `$(mname) help patterns' for help on patch matching."),
+  `Noblank,
+  `P("Use `$(mname) help environment' for help on environment variables."),
+  `S(Cmdliner.Manpage.s_bugs),
+  `P("Please report bugs at https://github.com/enspirit/dem-bs")
+];
+
+/****************************************************************************
+ * CLI Command functions in cmdliner format
+ */
+let compile_cmd = {
   let doc = "compiles files in current directory";
   let sdocs = Cmdliner.Manpage.s_common_options;
   let exits = Cmdliner.Term.default_exits;
@@ -154,7 +164,7 @@ let compile_cmd = {
     `Blocks(help_secs)
   ];
   (
-    Cmdliner.Term.(ret(const(compile) $ copts_t $ ctf $ csf $ text_filename $ data_filename)),
+    Cmdliner.Term.(ret(const(compile) $ copts_t)),
     Cmdliner.Term.info("compile", ~doc, ~sdocs, ~exits, ~man)
   );
 };
@@ -221,7 +231,7 @@ let print_cmd = {
    `Blocks(help_secs)
  ];
  (
-   Cmdliner.Term.(ret(const(print) $ copts_t $ ctf $ csf $ text_filename $ data_filename $ output_filename)),
+   Cmdliner.Term.(ret(const(print) $ copts_t $ output_filename)),
    Cmdliner.Term.info("print", ~doc, ~sdocs, ~exits, ~man)
  );
 };
@@ -250,16 +260,14 @@ let default_cmd = {
   let man = [
     `S(Cmdliner.Manpage.s_description),
     `P(
-      "Generates and prints documents written in Markdown, styled in CSS, with business data injected from
-       JSON or YAML files. By default, when dem is called without any command, it just compiles the text and
-       data files in the current directory without any style nor template.
-       Text file: index.md if it exists, or empty content otherwise.
-       Data file: index.json.yml if it exists, or index.json if it exists, or empty data otherwise."
+      "Generate and print documents written in Markdown, styled in CSS, with business data
+       injected from JSON or YAML files. By default, when no command is specified,
+       the compile command is called."
     ),
     `Blocks(help_secs)
   ];
   (
-    Cmdliner.Term.(ret(const(default_compilation) $ copts_t)),
+    Cmdliner.Term.(ret(const(compile) $ copts_t)),
     Cmdliner.Term.info("dem", ~version=version, ~doc, ~sdocs, ~exits, ~man)
   );
 };
@@ -267,6 +275,6 @@ let default_cmd = {
 // Available legal commands.
 let cmds = [help_cmd, compile_cmd, print_cmd];
 
-// Execute default command if no argument given to default_cmd
+// Execute default command if no argument given
 // Otherwise, execute the specified command.
 let () = Cmdliner.Term.(exit @@ eval_choice(default_cmd, cmds));
