@@ -75,39 +75,43 @@ let copts = (ctf, csf, text_filename, data_filename) => {ctf, csf, text_filename
 let copts_t = {
   let docs = Cmdliner.Manpage.s_common_options;
   let ctf = {
-    let doc = "Filename of the compilation template.";
-    let docv = "COMPILATION_TEMPLATE_FILENAME";
+    let docv = "FILE";
+    let doc = "Compile document using HTML template specified in $(docv). If $(docv) does not exist, nor its
+      default implicit replacement, a very basic HTML structure will be used instead.";
     Cmdliner.Arg.(
       value
       & opt(string, "index.html.tpl")
-      & info(["t", "compilation-template-filename"], ~docv, ~doc)
+      & info(["h", "html-template"], ~docv, ~doc)
     );
   };
   let csf = {
-    let doc = "Filename of the compilation style.";
-    let docv = "COMPILATION_STYLE_FILENAME";
+    let docv = "FILE";
+    let doc = "Style document as specified in $(docv). If $(docv) does not exist, nor its default implicit
+      replacement, an empty style will be used instead.";
     Cmdliner.Arg.(
       value
       & opt(string, "index.css")
-      & info(["s", "compilation-style-filename"], ~docv, ~doc)
+      & info(["s", "style"], ~docv, ~doc)
     );
   };
   let text_filename = {
-    let doc = "Text filename.";
-    let docv = "TEXT_FILENAME";
+    let docv = "FILE";
+    let doc = "Get document text from $(docv). If $(docv) does not exist, nor its default implicit
+      replacement, an empty content will be used instead.";
     Cmdliner.Arg.(
       value
       & opt(string, "index.md")
-      & info(["T", "text-filename"], ~docv, ~doc)
+      & info(["t", "text"], ~docv, ~doc)
     );
   };
   let data_filename = {
-    let doc = "Data filename.";
-    let docv = "DATA_FILENAME";
+    let docv = "FILE";
+    let doc = "Get document data from $(docv). If $(docv) does not exist, nor its default implicit
+      replacements, an empty data will be used instead.";
     Cmdliner.Arg.(
       value
       & opt(some(string), None)
-      & info(["D", "data-filename"], ~docv, ~doc)
+      & info(["d", "data"], ~docv, ~doc)
     );
   };
   Cmdliner.Term.(const(copts) $ ctf $ csf $ text_filename $ data_filename);
@@ -154,13 +158,9 @@ let compile_cmd = {
   let exits = Cmdliner.Term.default_exits;
   let man = [
     `S(Cmdliner.Manpage.s_description),
-    `P("Generates and prints documents written in Markdown, styled in CSS, with business data injected from
-        JSON or YAML files. By default, compiles text, data, template and style files in the current directory.
-        Text file: specified one or index.md if it exists, or empty content otherwise.
-        Data file: specified one or index.json.yml if it exists, or index.json if it exists,
-                   or empty data otherwise.
-        Template file: specified one or index.html.tpl if it exists, or a very basic html structure otherwise.
-        Style file: specified one or index.css if it exists, or empty style otherwise."),
+    `P("Compiles documents written in Markdown, styled in CSS, with business data injected from
+        JSON or YAML files. By default, compiles text, data, template and style files in the current
+        directory."),
     `Blocks(help_secs)
   ];
   (
@@ -170,49 +170,13 @@ let compile_cmd = {
 };
 
 let print_cmd = {
- let ctf = {
-   let doc = "Filename of the compilation template.";
-   let docv = "COMPILATION_TEMPLATE_FILENAME";
-   Cmdliner.Arg.(
-     value
-     & opt(string, "index.html.tpl")
-     & info(["t", "compilation-template-filename"], ~docv, ~doc)
-   );
- };
- let csf = {
-   let doc = "Filename of the compilation style.";
-   let docv = "COMPILATION_STYLE_FILENAME";
-   Cmdliner.Arg.(
-     value
-     & opt(string, "index.css")
-     & info(["s", "compilation-style-filename"], ~docv, ~doc)
-   );
- };
- let text_filename = {
-   let doc = "Text filename.";
-   let docv = "TEXT_FILENAME";
-   Cmdliner.Arg.(
-     value
-     & opt(string, "index.md")
-     & info(["T", "text-filename"], ~docv, ~doc)
-   );
- };
- let data_filename = {
-   let doc = "Data filename.";
-   let docv = "DATA_FILENAME";
-   Cmdliner.Arg.(
-     value
-     & opt(some(string), None)
-     & info(["D", "data-filename"], ~docv, ~doc)
-   );
- };
  let output_filename = {
-   let doc = "Output filename.";
-   let docv = "OUTPUT_FILENAME";
+   let docv = "FILE";
+   let doc = "Save PDF document in $(docv). When not used, name the document after the text source file.";
    Cmdliner.Arg.(
      value
      & opt(some(string), None)
-     & info(["O", "output-filename"], ~docv, ~doc)
+     & info(["o", "output"], ~docv, ~doc)
    );
  };
  let doc = "print a pdf document after compiling files in current directory";
@@ -222,12 +186,7 @@ let print_cmd = {
    `S(Cmdliner.Manpage.s_description),
    `P("Prints a PDF document after compiling a doc-e-mate source written with Markdown, styled in CSS, with
        business data injected from JSON or YAML files. By default, compiles text, data, template and style
-       files in the current directory.
-       Text file: specified one or index.md if it exists, or empty content otherwise.
-       Data file: specified one or index.json.yml if it exists, or index.json if it exists,
-                  or empty data otherwise.
-       Template file: specified one or index.html.tpl if it exists, or a very basic html structure otherwise.
-       Style file: specified one or index.css if it exists, or empty style otherwise."),
+       files in the current directory."),
    `Blocks(help_secs)
  ];
  (
