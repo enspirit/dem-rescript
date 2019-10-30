@@ -1,6 +1,8 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
+let version = "0.5.0";
+
 open Sugar;
 
 let close = () => {
@@ -258,12 +260,12 @@ let default_cmd = {
   ];
   (
     Cmdliner.Term.(ret(const(default_compilation) $ copts_t)),
-    Cmdliner.Term.info("dem", ~doc, ~sdocs, ~exits, ~man)
+    Cmdliner.Term.info("dem", ~version=version, ~doc, ~sdocs, ~exits, ~man)
   );
 };
 
 // Available legal commands.
-let cmds = [help_cmd, compile_cmd, print_cmd]; //version_cmd
+let cmds = [help_cmd, compile_cmd, print_cmd];
 
 // Execute default command if no argument given to default_cmd
 // Otherwise, execute the specified command.
