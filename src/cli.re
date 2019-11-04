@@ -56,19 +56,15 @@ let read_and_compile_all = (copts) => {
   { template_opt, style_opt, text_opt, data_opt, html };
 }
 
-let watch_config = Node.Fs.Watch.config(~recursive=true, ()); //FIXME NOT SUPPORTED ON LINUX !!
-
 let read_compile_and_print = (copts, print) => {
   let src = read_and_compile_all(copts);
   print(copts, src);
   if (Node.Fs.existsSync(copts.text_filename) && copts.watch_mode) {
     let root_dir = Node.Path.dirname(copts.text_filename);
     Js.log(root_dir);
-    let watcher = Node.Fs.Watch.watch(root_dir, ~config=watch_config)();
-    let change_handler = (. event: string, changed_file: Node.string_buffer) => {
-      let (_, changed_filename) = Node.test(changed_file);
-      Js.log(changed_file);
-      let ext = File.extension(changed_filename);
+    let watcher = Chokidar.watch(root_dir, ());
+    let handler = (path: string) => {
+      let ext = File.extension(path);
       switch ext {
       | Some("md") | Some("json") | Some("yml") | Some("js") | Some("css") | Some("tpl") =>
         let new_src = read_and_compile_all(copts);
@@ -76,10 +72,7 @@ let read_compile_and_print = (copts, print) => {
       | _ => ();
       };
     };
-    // let error_handler = (. ()) => Js.log("Watch error !!");
-    let _ = watcher
-    -> Node.Fs.Watch.on_(`change(change_handler));
-    // -> Node.Fs.Watch.on_(`error(error_handler));
+    let _ = Chokidar.on(watcher, "change", handler);
   }
 }
 
