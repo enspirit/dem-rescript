@@ -1,7 +1,7 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
-let version = "0.6.0";
+let version = "0.6.2";
 
 open Sugar;
 
@@ -56,23 +56,52 @@ let read_and_compile_all = (copts) => {
   { template_opt, style_opt, text_opt, data_opt, html };
 }
 
-let read_compile_and_print = (copts, print) => {
-  let src = read_and_compile_all(copts);
-  print(copts, src);
-  if (Node.Fs.existsSync(copts.text_filename) && copts.watch_mode) {
-    let root_dir = Node.Path.dirname(copts.text_filename);
-    Js.log(root_dir);
-    let watcher = Chokidar.watch(root_dir, ());
-    let handler = (path: string) => {
-      let ext = File.extension(path);
-      switch ext {
-      | Some("md") | Some("json") | Some("yml") | Some("js") | Some("css") | Some("tpl") =>
-        let new_src = read_and_compile_all(copts);
-        print(copts, new_src);
-      | _ => ();
-      };
+let watch_directory_rec = (directory, callback) => {
+  let watcher = Chokidar.watch(directory, ());
+  let handler = (path: string) => {
+    let ext = File.extension(path);
+    switch ext {
+    | Some("md") | Some("json") | Some("yml") | Some("js") | Some("css") | Some("tpl") =>
+      callback();
+    | _ => ();
     };
-    let _ = Chokidar.on(watcher, "change", handler);
+  };
+  let _ = Chokidar.on(watcher, "change", handler);
+};
+
+let directories = (copts) => {
+  let isSomeDistinctSubstring = (l, s1) => {
+    Belt.List.some(l, s2 => Js.String.startsWith(s1, s2) && s2 != s1)
+  };
+  [
+    Some(copts.template_filename),
+    Some(copts.style_filename),
+    Some(copts.text_filename),
+    copts.data_filename_opt,
+    copts.output_filename_opt
+  ]
+  -> Belt.List.map((f) => {
+    switch (f) {
+    | Some(f) when Node.Fs.existsSync(f) =>
+      let root_dir = Node.Path.dirname(f);
+      let absolute = Node.Path.resolve(root_dir, "");
+      Some(absolute)
+    | _ => None
+    }
+  })
+  -> Belt.List.keepMap(x => x)
+  |> List.sort_uniq(Pervasives.compare)
+  |> (l => Belt.List.filter(l, isSomeDistinctSubstring(l)))
+};
+
+let read_compile_and_print = (copts, print) => {
+  let do_it = () => {
+    let src = read_and_compile_all(copts);
+    print(copts, src);
+  };
+  do_it();
+  if (copts.watch_mode) {
+    List.iter((f) => watch_directory_rec(f, do_it), directories(copts));
   }
 }
 
