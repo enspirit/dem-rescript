@@ -1,7 +1,7 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
-let version = "0.6.2";
+let version = "0.6.3";
 
 open Sugar;
 
@@ -70,8 +70,9 @@ let watch_directory_rec = (directory, callback) => {
 };
 
 let directories = (copts) => {
-  let isSomeDistinctSubstring = (l, s1) => {
-    Belt.List.some(l, s2 => Js.String.startsWith(s1, s2) && s2 != s1)
+  // there is no element in l that is a leading substring of s1 except s1 itself
+  let noDistinctSubstring = (l, s1) => {
+    !Belt.List.some(l, s2 => s2 != s1 && Js.String.startsWith(s2, s1))
   };
   [
     Some(copts.template_filename),
@@ -91,7 +92,7 @@ let directories = (copts) => {
   })
   -> Belt.List.keepMap(x => x)
   |> List.sort_uniq(Pervasives.compare)
-  |> (l => Belt.List.filter(l, isSomeDistinctSubstring(l)))
+  |> (l => Belt.List.filter(l, noDistinctSubstring(l)))
 };
 
 let read_compile_and_print = (copts, print) => {
@@ -186,7 +187,10 @@ let copts_t = {
     );
   };
   let watch_mode = {
-    let doc = "Use watch mode.";
+    let doc = "Enable watch mode. Watches for modification of source files - which are files with the following
+      extensions: md, json, yml, js, css, tpl - located in directories of argument source files, and their
+      subdirectories. When a modification is detected, the dem command is run again.
+      If no source file is indicated, and no default file can be found, the watch mode is not enabled at all.";
     Cmdliner.Arg.(
       value
       & flag
