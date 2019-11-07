@@ -1,6 +1,6 @@
 # Doc-e-mate, your document's best friend
 
-This repository holds the `dem` commandline tool, that allows your to generate
+This repository holds the `dem` commandline tool, that allows you to generate
 and print documents written in Markdown, styled in CSS, with business data
 injected from JSON or YAML files.
 
@@ -17,13 +17,14 @@ To get started, try:
 ```
 dem --help
 dem compile --help
+dem print --help
 ```
 
-Use the `compile` sub-command to generate a document from markdown, css and
+Use the `compile` sub-command to generate an html document from markdown, css and
 json sources in specific files:
 
 ```
-dem compile -t examples/index.html.tpl -s examples/index.css  -T examples/index.md -D examples/index.json
+dem compile --html-template examples/index.html.tpl -s examples/index.css  -t examples/index.md -d examples/index.json
 ```
 
 Otherwise, skip lengthy parameters by following doc-e-mate conventions: current
@@ -34,9 +35,52 @@ folder having `index.md` (markdown text), `index.css` (style) and `index.json`
 dem compile
 ```
 
+Use the `print` sub-command to generate your document and convert it into a
+pdf document.
+
+```
+dem print
+```
+
+This command uses the WeasyPrint solution (see https://weasyprint.org/), so
+make sure that it is correctly installed on your machine (the weasyprint command
+must be available in a terminal).
+
+By default, output files are named after the text source file. But you may
+explicitly choose the name of the produced (html or pdf depending on the
+sub-command) files by using the `--output` option.
+
+```
+dem compile -o my_document.html
+dem print -o my_document.pdf
+```
+
+Eventually, edit your sources files and display the final result live by using
+the `--watch` option.
+
+```
+dem compile --watch
+dem print --watch
+```
+
+Doc-e-mate will watch for modifications of any source file located in the
+directory of each specified (or default) source file, as well as their
+subdirectories. Now, let's edit your sources in your favorite editor on the left
+hand side of your screen, and get a live display of the final pdf document on
+the right hand side of your screen.
+
+## Install
+
+Install the `dem` command line using `npm`:
+
+```
+npm install @enspirit/dem-bs
+```
+
+
 ## Hacking
 
-The `dem` commandline is written in BuckleScript, wth great help from the
+The `dem` command line is written in BuckleScript, wth great help from the
 following libraries:
 * mustache.js, see https://mustache.github.io/
 * markdown-it, see https://github.com/markdown-it/markdown-it and https://spec.commonmark.org/
