@@ -33,16 +33,8 @@ type t_src = {
 let write_or_print_html = (output_filename_opt, text_filename, html) => {
   switch(output_filename_opt) {
   | None => Js.log(html);
-  | Some(output_filename) => File.write_html(~output_filename, text_filename, html); ();
+  | Some(output_filename) => ignore(File.write_html(~output_filename, text_filename, html));
   }
-}
-
-let update_text = (src, text_filename) => {
-  let text_opt = File.read_text(text_filename);
-  let root_partials_dep = App.partials_dependencies(text_opt || "");
-  let partials = File.build_partials(~root=text_filename, root_partials_dep);
-  let html = App.compile(src.template_opt, src.style_opt, text_opt, src.data_opt, Some(partials));
-  {...src, html };
 }
 
 let read_and_compile_all = (copts) => {
@@ -92,7 +84,7 @@ let directories = (copts) => {
   })
   -> Belt.List.keepMap(x => x)
   |> List.sort_uniq(Pervasives.compare)
-  |> (l => Belt.List.filter(l, noDistinctSubstring(l)))
+  |> (l => Belt.List.keep(l, noDistinctSubstring(l)))
 };
 
 let read_compile_and_print = (copts, print) => {
