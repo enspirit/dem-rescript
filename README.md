@@ -10,6 +10,16 @@ injected from JSON or YAML files.
 > Markdown + YAML  + SASS   ->  Beautiful Maintainable Business Document
 ```
 
+## Install
+
+Install the `dem` command line using `npm`, locally:
+
+```
+npm install @enspirit/dem-bs
+```
+
+Or globally using the `-g` flag.
+
 ## Examples
 
 To get started, try:
@@ -77,15 +87,15 @@ Doc-e-mate supports mustache partials. Please take a look at Mustache partials d
 
 Also do not hesitate to use several levels of inclusion: `white_hat.md` may refer to another markdown file called `shield_of_light.md` located in a subdirectory `powers` with the following: `{{> powers/shield_of_light}}`. Just make sure to always use a path relative to the main text file.
 
-## Install
+### Build your data with javascript
 
-Install the `dem` command line using `npm`, locally:
+Doc-e-mate supports data file written in CommonJS. They are loaded using the
+NodeJS `require` directive. The only requirement is to export the data with the
+following instruction: `module.exports = data;` at the end of the javascript
+data file.
 
-```
-npm install @enspirit/dem-bs
-```
-
-Or globally using the `-g` flag.
+Check the examples directory of these repository for some javascript data
+examples.
 
 ## Hacking
 

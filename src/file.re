@@ -32,13 +32,11 @@ let read_yaml_data = filename => {
 };
 
 let read_js_data = filename => {
-  let content = robust_read("data", filename);
-  switch (content) {
-  | None => None
-  | Some(data) => try (Some(JSInterpreter.eval(data))) {
-    | e => Logger.error @@ Logger.format_exn(e); None
-    };
-  };
+  try {
+    Some(node_require(filename) |> objToJson);
+  } {
+  | e => Logger.error(Logger.format_exn(e)); None
+  }
 };
 
 let extension = filename => {

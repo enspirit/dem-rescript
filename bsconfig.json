@@ -22,7 +22,6 @@
     "@enspirit/bs-mustache",
     "@enspirit/bs-markdown-it",
     "@enspirit/bs-prettier",
-    "@enspirit/bs-js-interpreter",
     "@enspirit/bs-execa",
     "@enspirit/bs-chokidar"
   ],

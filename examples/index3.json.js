@@ -4,4 +4,6 @@ function f(p1, p2) {
   var res = {executed: sum, executer: mul, data_format: p1-p2};
   return res;
 };
-JSON.stringify(f(1,2));
+let data = f(1,2);
+
+module.exports = data;

@@ -1,3 +1,4 @@
+'use strict'
 let data = {
   "executer": "BuckleScript",
   "executed" : "Mustache",

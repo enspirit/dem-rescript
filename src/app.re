@@ -1,6 +1,3 @@
-// Convert Json to Js Object \!/ without type safety \!/
-external jsonToObj: Js.Json.t => Js.t({..}) = "%identity";
-
 open Sugar;
 
 let markdownItInstance = MarkdownIt.createMarkdownIt();

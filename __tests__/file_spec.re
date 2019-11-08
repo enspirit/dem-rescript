@@ -48,6 +48,31 @@ let () =
           }
         );
 
+        let js_data = [%bs.raw {|{executer: "BuckleScript",
+executed: "Mustache",
+data_format: "computed  with javascript"
+}|}];
+
+        test("#read_js_data works", () => {
+            expect(File.read_js_data("__tests__/resources/index.json.javascript"))
+            |> toEqual(Some(js_data))
+          }
+        );
+
+        let complex_js_data = [%bs.raw {|function () {
+  var fs = require('fs');
+  var home = require('os').homedir();
+  var dir = home + "/dem-bs/__tests__/resources/";
+  var contents = fs.readFileSync(dir + "index.json", 'utf8');
+  return JSON.parse(contents);
+}|}];
+
+        test("#read_js_data works with more complex js data", () => {
+            expect(File.read_js_data("__tests__/resources/complex.json.javascript"))
+            |> toEqual(Some(complex_js_data()))
+          }
+        );
+
         test("#read_data returns nothing if filename extension is not supported", () => {
             expect(File.read_data(Some("unsupported_extens.on")))
             |> toBe(None)
