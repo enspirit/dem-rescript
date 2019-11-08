@@ -69,14 +69,23 @@ subdirectories. Now, let's edit your sources in your favorite editor on the left
 hand side of your screen, and get a live display of the final pdf document on
 the right hand side of your screen.
 
+### Mustache partials
+
+Doc-e-mate supports mustache partials. Please take a look at Mustache partials documentation first: https://mustache.github.io/mustache.5.html.
+
+`TL;DR`: you may include text from some separated markdown file called `white_hat.md` and located using the following syntax in your main text file: `{{> white_hat}}`. In this cas, `white_hat.md` is located in the same directory as your main text file.
+
+Also do not hesitate to use several levels of inclusion: `white_hat.md` may refer to another markdown file called `shield_of_light.md` located in a subdirectory `powers` with the following: `{{> powers/shield_of_light}}`. Just make sure to always use a path relative to the main text file.
+
 ## Install
 
-Install the `dem` command line using `npm`:
+Install the `dem` command line using `npm`, locally:
 
 ```
 npm install @enspirit/dem-bs
 ```
 
+Or globally using the `-g` flag.
 
 ## Hacking
 
