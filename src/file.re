@@ -69,9 +69,33 @@ let read_template = filename => {
   robust_read("template", filename);
 }
 
-let read_style = filename => {
+let read_css_style = filename => {
   robust_read("style", filename);
-}
+};
+
+let read_sass_style = filename => {
+  Logger.info({j|Reading style from "$filename".|j});
+  try {
+    let css_buffer = NodeSass.renderSync(filename);
+    Some(css_buffer |> Node.Buffer.toString)
+  } {
+  | e => Logger.error @@ Logger.format_exn(e); None
+  }
+};
+
+let read_style = style_filename_opt => {
+  switch (style_filename_opt) {
+  | None when Node.Fs.existsSync("index.css.sass") => read_sass_style("index.css.sass");
+  | None => read_css_style("index.css");
+  | Some(style_filename) =>
+    switch (extension(style_filename)) {
+    | Some("sass") => read_sass_style(style_filename);
+    | Some("css")  => read_css_style(style_filename);
+    | _            =>
+      Logger.error({j|Unsupported extension in $style_filename.|j}); None
+    };
+  };
+};
 
 let robust_path = (path: string) => {
   switch (Node.Fs.existsSync(path)) {

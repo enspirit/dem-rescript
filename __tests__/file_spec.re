@@ -79,6 +79,22 @@ data_format: "computed  with javascript"
           }
         );
 
+        test("#read_sass_style returns nothing if sass file is malformed", () => {
+            expect(File.read_sass_style("__tests__/resources/malformed_index.css.sass"))
+            |> toBe(None)
+          }
+        );
+
+let expected_css = {|h1 {
+  color: green; }
+|}
+
+        test("#read_sass_style works", () => {
+            expect(File.read_sass_style("__tests__/resources/index.css.sass"))
+            |> toEqual(Some(expected_css))
+          }
+        );
+
         test("#find does not return false positive on unexisting path", () => {
             expect(File.find("unexisting"))
             |> toBe(None)

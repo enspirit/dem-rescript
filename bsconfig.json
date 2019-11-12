@@ -23,7 +23,8 @@
     "@enspirit/bs-markdown-it",
     "@enspirit/bs-prettier",
     "@enspirit/bs-execa",
-    "@enspirit/bs-chokidar"
+    "@enspirit/bs-chokidar",
+    "@enspirit/bs-node-sass"
   ],
   "bs-dev-dependencies": ["@glennsl/bs-jest"],
   "warnings": {

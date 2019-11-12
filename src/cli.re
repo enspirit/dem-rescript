@@ -1,7 +1,7 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
-let version = "0.7.0";
+let version = "0.8.0";
 
 open Sugar;
 
@@ -12,7 +12,7 @@ let close = () => {
 // common options type
 type copts = {
   template_filename: string,
-  style_filename: string,
+  style_filename_opt: option(string),
   text_filename: string,
   data_filename_opt: option(string),
   watch_mode: bool,
@@ -39,7 +39,7 @@ let write_or_print_html = (output_filename_opt, text_filename, html) => {
 
 let read_and_compile_all = (copts) => {
   let template_opt = File.read_template(copts.template_filename);
-  let style_opt = File.read_style(copts.style_filename);
+  let style_opt = File.read_style(copts.style_filename_opt);
   let text_opt = File.read_text(copts.text_filename);
   let data_opt = File.read_data(copts.data_filename_opt);
   let root_partials_dep = App.partials_dependencies(text_opt || "");
@@ -53,7 +53,7 @@ let watch_directory_rec = (directory, callback) => {
   let handler = (path: string) => {
     let ext = File.extension(path);
     switch ext {
-    | Some("md") | Some("json") | Some("yml") | Some("js") | Some("css") | Some("tpl") =>
+    | Some("md") | Some("json") | Some("yml") | Some("js") | Some("css") | Some("sass") | Some("tpl") =>
       callback();
     | _ => ();
     };
@@ -68,7 +68,7 @@ let directories = (copts) => {
   };
   [
     Some(copts.template_filename),
-    Some(copts.style_filename),
+    copts.style_filename_opt,
     Some(copts.text_filename),
     copts.data_filename_opt,
     copts.output_filename_opt
@@ -126,9 +126,9 @@ let print = (copts) => {
 /****************************************************************************
  * Functions called by CLI commands that are implemented on the CLI side
  */
-let copts = (template_filename, style_filename, text_filename, data_filename_opt, watch_mode, output_filename_opt) => {
+let copts = (template_filename, style_filename_opt, text_filename, data_filename_opt, watch_mode, output_filename_opt) => {
   template_filename,
-  style_filename,
+  style_filename_opt,
   text_filename,
   data_filename_opt,
   watch_mode,
@@ -151,10 +151,10 @@ let copts_t = {
   let style_filename = {
     let docv = "FILE";
     let doc = "Style document as specified in $(docv). If $(docv) does not exist, nor its default implicit
-      replacement, an empty style will be used instead.";
+      replacements, an empty style will be used instead.";
     Cmdliner.Arg.(
       value
-      & opt(string, "index.css")
+      & opt(some(string), None)
       & info(["s", "style"], ~docv, ~doc)
     );
   };
