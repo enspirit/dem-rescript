@@ -1,7 +1,7 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
-let version = "0.8.0";
+let version = "0.9.0";
 
 open Sugar;
 
@@ -16,7 +16,9 @@ type copts = {
   text_filename: string,
   data_filename_opt: option(string),
   watch_mode: bool,
-  output_filename_opt: option(string)
+  output_filename_opt: option(string),
+  publipost: bool,
+  async: bool
 };
 
 type t_src = {
@@ -24,29 +26,36 @@ type t_src = {
   style_opt: option(string),
   text_opt: option(string),
   data_opt: option(Js.Json.t),
+  expanded_output_filename_opt: option(string),
   html: string
 };
 
 /****************************************************************************
  * Functions called by CLI commands and connected to the app API
  */
-let write_or_print_html = (output_filename_opt, text_filename, html) => {
+let write_or_else_print_html = (output_filename_opt, text_filename, html) => {
   switch(output_filename_opt) {
   | None => Js.log(html);
-  | Some(output_filename) => ignore(File.write_html(~output_filename, text_filename, html));
+  | Some(_) => ignore(File.write_html(~output_filename_opt, text_filename, html));
   }
 }
 
-let read_and_compile_all = (copts) => {
-  let template_opt = File.read_template(copts.template_filename);
-  let style_opt = File.read_style(copts.style_filename_opt);
-  let text_opt = File.read_text(copts.text_filename);
-  let data_opt = File.read_data(copts.data_filename_opt);
-  let root_partials_dep = App.partials_dependencies(text_opt || "");
-  let partials = File.build_partials(~root=copts.text_filename, root_partials_dep);
-  let html = App.compile(template_opt, style_opt, text_opt, data_opt, Some(partials));
-  { template_opt, style_opt, text_opt, data_opt, html };
-}
+let read_and_compile_all = (copts, already_data_opt_opt) => {
+  let data_opt_promise = switch (already_data_opt_opt) {
+  | None => File.read_single_data(copts.data_filename_opt);
+  | Some(already_data_opt) => promise(already_data_opt);
+  };
+  data_opt_promise |> then_resolve(data_opt => {
+    let template_opt = File.read_template(copts.template_filename);
+    let style_opt = File.read_style(copts.style_filename_opt);
+    let text_opt = File.read_text(copts.text_filename);
+    let root_partials_dep = App.partials_dependencies(text_opt || "");
+    let partials = File.build_partials(~root=copts.text_filename, root_partials_dep);
+    let expanded_output_filename_opt = File.expand(data_opt, copts.output_filename_opt);
+    let html = App.compile(template_opt, style_opt, text_opt, data_opt, Some(partials));
+    { template_opt, style_opt, text_opt, data_opt, expanded_output_filename_opt, html };
+  });
+};
 
 let watch_directory_rec = (directory, callback) => {
   let watcher = Chokidar.watch(directory, ());
@@ -89,22 +98,38 @@ let directories = (copts) => {
 
 let read_compile_and_print = (copts, print) => {
   let do_it = () => {
-    let src = read_and_compile_all(copts);
-    print(copts, src);
+    if (copts.publipost && copts.data_filename_opt != None) {
+      File.read_data(~batch=true, ~async=copts.async, copts.data_filename_opt)
+      |> Js.Promise.then_(data => {
+        Js.Promise.all(
+          data
+          |> List.map(data => {
+            read_and_compile_all(copts, Some(Some(data)))
+            |> then_resolve(print(copts, _));
+          })
+          |> Belt.List.toArray);
+      });
+    } else {
+      Js.Promise.all([|
+        read_and_compile_all(copts, None)
+        |> then_resolve(print(copts, _))
+      |]);
+    }
   };
-  do_it();
-  if (copts.watch_mode) {
-    List.iter((f) => watch_directory_rec(f, do_it), directories(copts));
-  }
-}
+  do_it() |> then_resolve(_ => {
+    if (copts.watch_mode) {
+      directories(copts) |> List.iter((d) => watch_directory_rec(d, ignore_promise(do_it)));
+    }
+  })
+};
 
 let compile = (copts) => {
   try {
-    read_compile_and_print(copts, fun (copts, src) => {
-      write_or_print_html(copts.output_filename_opt, copts.text_filename, src.html);
-    });
-    close();
-    `Ok();
+    let p = read_compile_and_print(copts, fun (copts, src) => {
+      write_or_else_print_html(src.expanded_output_filename_opt, copts.text_filename, src.html);
+    })
+    |> then_resolve(_ => close());
+    `Ok(p);
   } {
   | e => `Error(false, Logger.format_exn(e));
   }
@@ -112,12 +137,12 @@ let compile = (copts) => {
 
 let print = (copts) => {
   try {
-    read_compile_and_print(copts, fun (copts, src) => {
-      let html_filename = File.write_html(copts.text_filename, src.html);
-      Weasyprint.print(html_filename, copts.output_filename_opt);
-    });
-    close();
-    `Ok(());
+    let p = read_compile_and_print(copts, fun (copts, src) => {
+      let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, copts.text_filename, src.html);
+      Weasyprint.print(html_filename, src.expanded_output_filename_opt);
+    })
+    |> then_resolve(_ => close());
+    `Ok(p);
   } {
   | e => `Error(false, Logger.format_exn(e));
   }
@@ -126,18 +151,20 @@ let print = (copts) => {
 /****************************************************************************
  * Functions called by CLI commands that are implemented on the CLI side
  */
-let copts = (template_filename, style_filename_opt, text_filename, data_filename_opt, watch_mode, output_filename_opt) => {
+let copts = (template_filename, style_filename_opt, text_filename, data_filename_opt, watch_mode, output_filename_opt, publipost, async) => {
   template_filename,
   style_filename_opt,
   text_filename,
   data_filename_opt,
   watch_mode,
-  output_filename_opt
+  output_filename_opt,
+  publipost,
+  async
 };
 
 /* Options common to all commands */
 let copts_t = {
-  let docs = Cmdliner.Manpage.s_common_options;
+  let _ = Cmdliner.Manpage.s_common_options;
   let template_filename = {
     let docv = "FILE";
     let doc = "Compile document using HTML template specified in $(docv). If $(docv) does not exist, nor its
@@ -198,7 +225,35 @@ let copts_t = {
       & info(["o", "output"], ~docv, ~doc)
     );
   };
-  Cmdliner.Term.(const(copts) $ template_filename $ style_filename $ text_filename $ data_filename $ watch_mode $ output_filename);
+  let publipost = {
+    let doc = "Enable publiposting. Compile or print multiple instances of the same document using as many
+      dataset as necessary. In this case, a javascript data file must be given as parameter which exports an
+      array containing the data objects. A document will be generated for each object."
+    Cmdliner.Arg.(
+      value
+      & flag
+      & info(["publipost"], ~doc)
+    );
+  };
+  let async = {
+    let doc = "Allow asynchronized data source. When enabled, allow using some asynchronized source of data.
+      Obviously, this has an effect when using a javascript data file only. Also, do not use this option if
+      your javascript data file does not export a promise, doc-e-mate would fail in that case."
+    Cmdliner.Arg.(
+      value
+      & flag
+      & info(["async"], ~doc)
+    );
+  };
+  Cmdliner.Term.(const(copts)
+  $ template_filename
+  $ style_filename
+  $ text_filename
+  $ data_filename
+  $ watch_mode
+  $ output_filename
+  $ publipost
+  $ async);
 };
 
 let help = (_, man_format, cmds, topic) =>
@@ -211,11 +266,11 @@ let help = (_, man_format, cmds, topic) =>
     | `Error(e) => `Error((false, e))
     | `Ok(t) when t == "topics" =>
       List.iter(print_endline, topics);
-      `Ok();
+      `Ok(ignore() |> promise);
     | `Ok(t) when List.mem(t, cmds) => `Help((man_format, Some(t)))
     | `Ok(_) =>
       let page = ((topic, 7, "", "", ""), [`S(topic), `P("Say something")]);
-      `Ok(Cmdliner.Manpage.print(man_format, Format.std_formatter, page));
+      `Ok(Cmdliner.Manpage.print(man_format, Format.std_formatter, page) |> promise);
     };
   };
 
@@ -311,7 +366,8 @@ let cmds = [help_cmd, compile_cmd, print_cmd];
 
 // Execute default command if no argument given
 // Otherwise, execute the specified command.
-let () = switch (Cmdliner.Term.eval_choice(default_cmd, cmds)) {
-| `Error _ => exit(1)
-| _ => ()
+let _ = switch (Cmdliner.Term.eval_choice(default_cmd, cmds)) {
+| `Help | `Version => ignore() |> promise
+| `Error(_) => exit(1) |> promise
+| `Ok r => r |> then_resolve(ignore)
 };

@@ -11,31 +11,52 @@ let read_text = filename => {
   robust_read("text", filename);
 }
 
-let read_json_data = filename => {
+let read_json_data = (~batch=false, filename) => {
   let content = robust_read("data", filename);
   switch (content) {
-  | None => None
-  | Some(data) => try (Some(Js.Json.parseExn(data))) {
-    | e => Logger.error @@ Logger.format_exn(e); None
+  | None => []
+  | Some(data) => try {
+    let json = Js.Json.parseExn(data);
+    if (batch) {
+      ensure_array @@ json
+    } else {
+      [json]
     };
-  };
-};
-
-let read_yaml_data = filename => {
-  let content = robust_read("data", filename);
-  switch (content) {
-  | None => None
-  | Some(data) => try (Some(data -> Yaml.yamlParse())) {
-    | e => Logger.error @@ Logger.format_exn(e); None
-    };
-  };
-};
-
-let read_js_data = filename => {
-  try {
-    Some(node_require(filename) |> objToJson);
   } {
-  | e => Logger.error(Logger.format_exn(e)); None
+    | e => Logger.error @@ Logger.format_exn(e); []
+    };
+  };
+};
+
+let read_yaml_data = (~batch=false, filename) => {
+  let content = robust_read("data", filename);
+  switch (content) {
+  | None => []
+  | Some(data) => try {
+    let json = Yaml.yamlParse(data, ());
+    if (batch) {
+      ensure_array @@ json
+    } else {
+      [json]
+    };
+  } {
+    | e => Logger.error @@ Logger.format_exn(e); []
+    };
+  };
+};
+
+let read_js_data = (~batch=false, ~async=false, filename) => {
+  try {
+    switch (batch, async) {
+    | (false, false) => [node_require(filename) |> objToJson] |> promise;
+    | (true, false)  => node_require(filename) |> objToJsonList |> promise;
+    | (false, true)  => node_require_promise(filename)
+      |> then_resolve(data => [objToJson(data)]);
+    | (true, true)   => node_require_promise(filename)
+      |> then_resolve(objToJsonList);
+    }
+  } {
+  | e => Logger.error(Logger.format_exn(e)); promise([]);
   }
 };
 
@@ -50,19 +71,29 @@ let extension = filename => {
   };
 }
 
-let read_data = data_filename_opt => {
+let read_data = (~batch=false, ~async=false, data_filename_opt) => {
   switch (data_filename_opt) {
-  | None when Node.Fs.existsSync("index.json.yml") => read_yaml_data("index.json.yml");
-  | None => read_json_data("index.json");
+  | None when Node.Fs.existsSync("index.json.yml") => read_yaml_data(~batch, "index.json.yml") |> promise;
+  | None => read_json_data(~batch, "index.json") |> promise;
   | Some(data_filename) =>
     switch (extension(data_filename)) {
-    | Some("yml")  => read_yaml_data(data_filename);
-    | Some("json") => read_json_data(data_filename);
-    | Some("js")   => read_js_data(data_filename);
+    | Some("yml")  => read_yaml_data(~batch, data_filename) |> promise;
+    | Some("json") => read_json_data(~batch, data_filename) |> promise;
+    | Some("js")   => read_js_data(~batch, ~async, data_filename);
     | _            =>
-      Logger.error({j|Unsupported extension in $data_filename.|j}); None
+      Logger.error({j|Unsupported extension in $data_filename.|j});
+      promise([]);
     };
   };
+};
+
+let read_single_data = (data_filename_opt) => {
+  read_data(data_filename_opt) |> then_resolve(data =>
+    switch (data) {
+    | [] => None
+    | l  => Some(List.hd(l))
+    }
+  );
 };
 
 let read_template = filename => {
@@ -102,13 +133,7 @@ let robust_path = (path: string) => {
   | false => None
   | true => Some(path)
   }
-}
-
-let robust_dir = (path) => {
-  try (Some(Node.Fs.readdirSync(path))) {
-  | e => Logger.error @@ Logger.format_exn(e); None
-  }
-}
+};
 
 /* returns the path of the given file, relative to the given root */
 let find = (~root:string=".", filepath: string) => {
@@ -120,7 +145,7 @@ let find = (~root:string=".", filepath: string) => {
   | true => Some(root_pattern)
   | false => None
   }
-}
+};
 
 /* a partial is loaded currently identified
  * by its path relatively to the root path
@@ -143,17 +168,36 @@ let rec build_partials = (~root:string=".", ~partials: Js.Dict.t(string)=Js.Dict
     build_partials(~root, ~partials, List.rev_append(rem_keys, dependencies));
   | [_, ...rem_keys] => build_partials(~root, ~partials, rem_keys)
   }
-}
+};
 
 let robust_write = (what, filename, content) => {
   Logger.info({j|Writing $what in "$filename".|j});
   try (Node.Fs.writeFileAsUtf8Sync(filename, content)) {
   | Caml_js_exceptions.Error(e) => Logger.error @@ Logger.format_caml_js_exn(e); ()
   };
-}
+};
 
-let write_html = (~output_filename=?, text_filename, html) => {
-  let output_filename = output_filename || (Node.Path.basename_ext(text_filename, "md") ++ "html")
+let replace_extension = (~before, ~after, filename) => {
+  let dir = Node.Path.dirname(filename);
+  let name = Node.Path.basename_ext(filename, before) ++ after;
+  Node.Path.join2(dir, name);
+};
+
+let expand = (json_data_opt, filename_opt) => {
+  switch (json_data_opt, filename_opt) {
+  | (None, _) => filename_opt
+  | (_, None) => None
+  | (Some(json_data), Some(filename)) =>
+    let js_data = json_data |> jsonToObj;
+    Some(Mustache.render(filename, js_data, ()));
+  }
+};
+
+let write_html = (~output_filename_opt, text_filename, html) => {
+  let output_filename = switch (output_filename_opt) {
+  | None => replace_extension(~before="md", ~after="html", text_filename)
+  | Some(pdf_filename) => replace_extension(~before="pdf", ~after="html", pdf_filename)
+  };
   robust_write("html", output_filename, html);
   output_filename;
 };

@@ -65,7 +65,7 @@ dem compile -o my_document.html
 dem print -o my_document.pdf
 ```
 
-Eventually, edit your sources files and display the final result live by using
+Also, edit your sources files and display the final result live by using
 the `--watch` option.
 
 ```
@@ -79,11 +79,20 @@ subdirectories. Now, let's edit your sources in your favorite editor on the left
 hand side of your screen, and get a live display of the final pdf document on
 the right hand side of your screen.
 
+Eventually, generate multiple data instanciations of the same document by using
+the `--publipost` option and using an array of data instead of a single data
+object, and instantiate the name of the produced document too with the same
+mustache format as in the document.
+
+```
+dem print --publipost -d array_of_data_instances.json.yml -o my_report_{{id}}.pdf
+```
+
 ### Mustache partials
 
 Doc-e-mate supports mustache partials. Please take a look at Mustache partials documentation first: https://mustache.github.io/mustache.5.html.
 
-`TL;DR`: you may include text from some separated markdown file called `white_hat.md` and located using the following syntax in your main text file: `{{> white_hat}}`. In this cas, `white_hat.md` is located in the same directory as your main text file.
+`TL;DR`: you may include text from some separated markdown file called `white_hat.md` and located using the following syntax in your main text file: `{{> white_hat}}`. In this case, `white_hat.md` is located in the same directory as your main text file.
 
 Also do not hesitate to use several levels of inclusion: `white_hat.md` may refer to another markdown file called `shield_of_light.md` located in a subdirectory `powers` with the following: `{{> powers/shield_of_light}}`. Just make sure to always use a path relative to the main text file.
 
@@ -92,7 +101,8 @@ Also do not hesitate to use several levels of inclusion: `white_hat.md` may refe
 Doc-e-mate supports data file written in CommonJS. They are loaded using the
 NodeJS `require` directive. The only requirement is to export the data with the
 following instruction: `module.exports = data;` at the end of the javascript
-data file.
+data file. You may use an asynchronized script which returns a javascript
+promise, just do not forget the `--async` option then.
 
 Check the examples directory of these repository for some javascript data
 examples.
