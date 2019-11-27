@@ -42,7 +42,7 @@ let (||) = (opt, default) => or_else(opt, default);
 
 let has_key = (dict, key) => Js.Dict.get(dict, key) != None;
 
-let promise = (e) => Js.Promise.make((~resolve, ~reject) => resolve(. e));
+let promise = (e) => Js.Promise.make((~resolve, ~reject as _) => resolve(. e));
 
 let then_resolve = (f, p) => p |> Js.Promise.then_(x => Js.Promise.resolve(f(x)));
 
