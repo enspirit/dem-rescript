@@ -1,7 +1,7 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
-let version = "0.9.0";
+let version = "0.10.0";
 
 open Sugar;
 
@@ -40,12 +40,18 @@ let write_or_else_print_html = (output_filename_opt, text_filename, html) => {
   }
 }
 
-let read_and_compile_all = (copts, already_data_opt_opt) => {
-  let data_opt_promise = switch (already_data_opt_opt) {
+/* Returns a data option promise.
+ * If some data were already loaded, promise them,
+ * or else try loading them from the data file */
+let data_opt_promise = (copts, loaded_data_opt_opt) => {
+  switch (loaded_data_opt_opt) {
   | None => File.read_single_data(copts.data_filename_opt);
-  | Some(already_data_opt) => promise(already_data_opt);
-  };
-  data_opt_promise |> then_resolve(data_opt => {
+  | Some(loaded_data_opt) => promise(loaded_data_opt);
+  }
+}
+
+let read_and_compile_all = (copts, already_data_opt_opt) => {
+  data_opt_promise(copts, already_data_opt_opt) |> then_resolve(data_opt => {
     let template_opt = File.read_template(copts.template_filename);
     let style_opt = File.read_style(copts.style_filename_opt);
     let text_opt = File.read_text(copts.text_filename);
@@ -116,36 +122,33 @@ let read_compile_and_print = (copts, print) => {
       |]);
     }
   };
-  do_it() |> then_resolve(_ => {
-    if (copts.watch_mode) {
-      directories(copts) |> List.iter((d) => watch_directory_rec(d, ignore_promise(do_it)));
-    }
-  })
+
+  try {
+    let result_promise = do_it() |> then_resolve(_ => {
+      if (copts.watch_mode) {
+        directories(copts) |> List.iter(d => watch_directory_rec(d, ignore_promise(do_it)));
+      };
+      close();
+    });
+    `Ok(result_promise);
+  } {
+  | e => `Error(false, Logger.format_exn(e));
+  }
 };
 
 let compile = (copts) => {
-  try {
-    let p = read_compile_and_print(copts, fun (copts, src) => {
-      write_or_else_print_html(src.expanded_output_filename_opt, copts.text_filename, src.html);
-    })
-    |> then_resolve(_ => close());
-    `Ok(p);
-  } {
-  | e => `Error(false, Logger.format_exn(e));
-  }
+  let print = (copts, src) => {
+    write_or_else_print_html(src.expanded_output_filename_opt, copts.text_filename, src.html);
+  };
+  read_compile_and_print(copts, print);
 };
 
 let print = (copts) => {
-  try {
-    let p = read_compile_and_print(copts, fun (copts, src) => {
-      let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, copts.text_filename, src.html);
-      Weasyprint.print(html_filename, src.expanded_output_filename_opt);
-    })
-    |> then_resolve(_ => close());
-    `Ok(p);
-  } {
-  | e => `Error(false, Logger.format_exn(e));
-  }
+  let print = (copts, src) => {
+    let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, copts.text_filename, src.html);
+    Weasyprint.print(html_filename, src.expanded_output_filename_opt);
+  };
+  read_compile_and_print(copts, print);
 }
 
 /****************************************************************************
