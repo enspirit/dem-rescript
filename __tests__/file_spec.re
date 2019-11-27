@@ -15,6 +15,16 @@ let () =
           |> toBe(None)
         });
 
+        test("#make_absolute_filepath works", () => {
+          expect(File.make_absolute_filepath(~ext_before="before", ~ext_after="after", "filename.before"))
+          |> toBe("filename.after")
+        });
+
+        test("#make_absolute_filepath works without replacement", () => {
+          expect(File.make_absolute_filepath(~ext_before=".before", ~ext_after="", "filename.before"))
+          |> toBe("filename")
+        });
+
         test("#read_text works", () => {
           expect(File.read_text("__tests__/resources/index.md"))
           |> toBe(Some("# {{executer}} executes {{executed}} using {{data_format}} data.

@@ -3,7 +3,10 @@ open Sugar;
 let markdownItInstance = MarkdownIt.createMarkdownIt();
 let markdownIt = text => MarkdownIt.render(markdownItInstance, text);
 
-let mustache = Mustache.render;
+let mustache = (text, data, partials_opt) => {
+  let partials = partials_opt;
+  Mustache.render(text, data, ~partials?, ());
+}
 
 type t_template = string;
 type t_style = string;
@@ -88,29 +91,29 @@ let with_semantics_tags = text => {
   };
 
   insert_tags(split_at_html_title_tag, [], "");
-}
+};
 
-let compile_body = (text, js_data, partials) => {
-  mustache(text, js_data, ~partials?, ())
+let instantiate_body = (text_opt, json_data_opt, partials_opt) => {
+  let text = text_opt || default_text;
+  let json_data = json_data_opt || default_data;
+  let js_data = json_data |> jsonToObj;
+  mustache(text, js_data, partials_opt);
+};
+
+let compile_body = (text_opt, data_opt, partials_opt) => {
+  instantiate_body(text_opt, data_opt, partials_opt)
   |> markdownIt
   |> with_semantics_tags
   |> Formatter.format
 };
 
-let compile_body = (text, json_data) => {
-  let text = text || default_text;
-  let json_data = json_data || default_data;
-  let js_data = json_data |> jsonToObj;
-  compile_body(text, js_data);
-};
-
-let compile = (template, style, text, data, partials) => {
-  let template = template || default_template;
-  let compiled_style = style || default_style;
-  let compiled_body = compile_body(text, data, partials);
+let compile = (template_opt, style_opt, text_opt, data_opt, partials_opt) => {
+  let template = template_opt || default_template;
+  let compiled_style = style_opt || default_style;
+  let compiled_body = compile_body(text_opt, data_opt, partials_opt);
   mustache(template, {
     "compiled_style": compiled_style,
     "compiled_body": compiled_body
-  }, ~partials?, ())
+  }, partials_opt)
   |> Formatter.format;
 };

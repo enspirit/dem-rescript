@@ -4,11 +4,10 @@ type t_text = string;
 type t_data = Js.Json.t;
 type t_partials = Js.Dict.t(string);
 
-// Basic compilation function that applies mustache and then markdownIt to
-// some given text and data (in json or yaml format).
+// Instantiate function: applies mustache to some given text and data.
 // All arguments are option types replaced with application default values
 // when empty.
-let compile_body: (option(t_text), option(t_data), option(t_partials)) => string;
+let instantiate_body: (option(t_text), option(t_data), option(t_partials)) => string;
 
 // Full compilation function that compiles some given style and compiled body
 // using some given template.

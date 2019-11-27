@@ -21,62 +21,44 @@ type copts = {
   async: bool
 };
 
-type t_src = {
+type t_instantiation_src = {
+  text_opt: option(string),
+  partials: Js.Dict.t(string),
+  data_opt: option(Js.Json.t),
+  expanded_output_filename_opt: option(string)
+};
+
+type t_compilation_src = {
+  text_opt: option(string),
+  partials: Js.Dict.t(string),
+  data_opt: option(Js.Json.t),
   template_opt: option(string),
   style_opt: option(string),
-  text_opt: option(string),
-  data_opt: option(Js.Json.t),
-  expanded_output_filename_opt: option(string),
-  html: string
+  expanded_output_filename_opt: option(string)
+};
+
+type t_print_src = {
+  html: string,
+  expanded_output_filename_opt: option(string)
 };
 
 /****************************************************************************
  * Functions called by CLI commands and connected to the app API
  */
-let write_or_else_print_html = (output_filename_opt, text_filename, html) => {
-  switch(output_filename_opt) {
-  | None => Js.log(html);
-  | Some(_) => ignore(File.write_html(~output_filename_opt, text_filename, html));
-  }
-}
-
-/* Returns a data option promise.
- * If some data were already loaded, promise them,
- * or else try loading them from the data file */
-let data_opt_promise = (copts, loaded_data_opt_opt) => {
-  switch (loaded_data_opt_opt) {
-  | None => File.read_single_data(copts.data_filename_opt);
-  | Some(loaded_data_opt) => promise(loaded_data_opt);
-  }
-}
-
-let read_and_compile_all = (copts, already_data_opt_opt) => {
-  data_opt_promise(copts, already_data_opt_opt) |> then_resolve(data_opt => {
-    let template_opt = File.read_template(copts.template_filename);
-    let style_opt = File.read_style(copts.style_filename_opt);
-    let text_opt = File.read_text(copts.text_filename);
-    let root_partials_dep = App.partials_dependencies(text_opt || "");
-    let partials = File.build_partials(~root=copts.text_filename, root_partials_dep);
-    let expanded_output_filename_opt = File.expand(data_opt, copts.output_filename_opt);
-    let html = App.compile(template_opt, style_opt, text_opt, data_opt, Some(partials));
-    { template_opt, style_opt, text_opt, data_opt, expanded_output_filename_opt, html };
-  });
-};
-
 let watch_directory_rec = (directory, callback) => {
-  let watcher = Chokidar.watch(directory, ());
-  let handler = (path: string) => {
-    let ext = File.extension(path);
-    switch ext {
-    | Some("md") | Some("json") | Some("yml") | Some("js") | Some("css") | Some("sass") | Some("tpl") =>
-      callback();
-    | _ => ();
-    };
-  };
-  let _ = Chokidar.on(watcher, "change", handler);
+ let watcher = Chokidar.watch(directory, ());
+ let handler = (path: string) => {
+   let ext = File.extension(path);
+   switch ext {
+   | Some("md") | Some("json") | Some("yml") | Some("js") | Some("css") | Some("sass") | Some("tpl") =>
+     callback();
+   | _ => ();
+   };
+ };
+ let _ = Chokidar.on(watcher, "change", handler);
 };
 
-let directories = (copts) => {
+let directories = copts => {
   // there is no element in l that is a leading substring of s1 except s1 itself
   let noDistinctSubstring = (l, s1) => {
     !Belt.List.some(l, s2 => s2 != s1 && Js.String.startsWith(s2, s1))
@@ -88,7 +70,7 @@ let directories = (copts) => {
     copts.data_filename_opt,
     copts.output_filename_opt
   ]
-  -> Belt.List.map((f) => {
+  -> Belt.List.map(f => {
     switch (f) {
     | Some(f) when Node.Fs.existsSync(f) =>
       let root_dir = Node.Path.dirname(f);
@@ -102,24 +84,48 @@ let directories = (copts) => {
   |> (l => Belt.List.keep(l, noDistinctSubstring(l)))
 };
 
-let read_compile_and_print = (copts, print) => {
+let load_instantiation_sources = (copts, data_opt) => {
+  let text_opt = File.read_text(copts.text_filename);
+  let root_partials_dep = App.partials_dependencies(text_opt || "");
+  let partials = File.build_partials(~root=copts.text_filename, root_partials_dep);
+  let expanded_output_filename_opt = File.expand(data_opt, copts.output_filename_opt);
+  { text_opt, partials, data_opt, expanded_output_filename_opt }
+};
+
+let load_compilation_sources = (copts, data_opt) => {
+  let i_src = load_instantiation_sources(copts, data_opt);
+  let template_opt = File.read_template(copts.template_filename);
+  let style_opt = File.read_style(copts.style_filename_opt);
+  {
+    text_opt:i_src.text_opt,
+    partials:i_src.partials,
+    data_opt,
+    template_opt,
+    style_opt,
+    expanded_output_filename_opt:i_src.expanded_output_filename_opt
+  };
+};
+
+let execute = (~copts, ~read:((copts, 'a) => 'b), ~transform:((copts, 'b) => 'c), ~print:((copts, 'c) => unit)) => {
   let do_it = () => {
     if (copts.publipost && copts.data_filename_opt != None) {
       File.read_data(~batch=true, ~async=copts.async, copts.data_filename_opt)
-      |> Js.Promise.then_(data => {
-        Js.Promise.all(
-          data
-          |> List.map(data => {
-            read_and_compile_all(copts, Some(Some(data)))
-            |> then_resolve(print(copts, _));
-          })
-          |> Belt.List.toArray);
+      |> then_resolve(data => {
+        data
+        |> List.map(data => {
+          read(copts, Some(data))
+          |> transform(copts, _)
+          |> print(copts, _);
+        })
+        |> Belt.List.toArray;
       });
     } else {
-      Js.Promise.all([|
-        read_and_compile_all(copts, None)
-        |> then_resolve(print(copts, _))
-      |]);
+      File.read_single_data(copts.data_filename_opt)
+      |> then_resolve(data => {
+        [|read(copts, data)
+        |> transform(copts, _)
+        |> print(copts, _)|];
+      });
     }
   };
 
@@ -136,20 +142,58 @@ let read_compile_and_print = (copts, print) => {
   }
 };
 
-let compile = (copts) => {
-  let print = (copts, src) => {
-    write_or_else_print_html(src.expanded_output_filename_opt, copts.text_filename, src.html);
+let instantiate = (copts) => {
+  let read = load_instantiation_sources;
+  let transform = (copts, src:t_instantiation_src) => {
+    let markdown = App.instantiate_body(src.text_opt, src.data_opt, Some(src.partials));
+    {
+      text_opt:Some(markdown),
+      partials:src.partials,
+      data_opt:src.data_opt,
+      template_opt:None,
+      style_opt:None,
+      expanded_output_filename_opt:src.expanded_output_filename_opt
+    };
   };
-  read_compile_and_print(copts, print);
+  let print = (copts, src:t_compilation_src) => {
+    let output_filename_opt = src.expanded_output_filename_opt;
+    let Some(markdown) = src.text_opt;
+    switch(output_filename_opt) {
+    | None => Js.log(markdown);
+    | Some(_) => ignore(File.write_md(~output_filename_opt, copts.text_filename, markdown));
+    };
+  };
+  execute(~copts, ~read, ~transform, ~print);
+};
+
+let compile = (copts) => {
+  let read = load_compilation_sources;
+  let transform = (copts, src:t_compilation_src) => {
+    let html = App.compile(src.template_opt, src.style_opt, src.text_opt, src.data_opt, Some(src.partials));
+    { html, expanded_output_filename_opt:src.expanded_output_filename_opt };
+  };
+  let print = (copts, src:t_print_src) => {
+    let output_filename_opt = src.expanded_output_filename_opt;
+    switch(output_filename_opt) {
+    | None => Js.log(src.html);
+    | Some(_) => ignore(File.write_html(~output_filename_opt, copts.text_filename, src.html));
+    }
+  };
+  execute(~copts, ~read, ~transform, ~print);
 };
 
 let print = (copts) => {
-  let print = (copts, src) => {
+  let read = load_compilation_sources;
+  let transform = (copts, src:t_compilation_src) => {
+    let html = App.compile(src.template_opt, src.style_opt, src.text_opt, src.data_opt, Some(src.partials));
+    { html, expanded_output_filename_opt:src.expanded_output_filename_opt };
+  };
+  let print = (copts, src:t_print_src) => {
     let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, copts.text_filename, src.html);
     Weasyprint.print(html_filename, src.expanded_output_filename_opt);
   };
-  read_compile_and_print(copts, print);
-}
+  execute(~copts, ~read, ~transform, ~print);
+};
 
 /****************************************************************************
  * Functions called by CLI commands that are implemented on the CLI side
@@ -294,6 +338,23 @@ let help_secs = [
 /****************************************************************************
  * CLI Command functions in cmdliner format
  */
+let instantiate_cmd = {
+ let doc = "instantiates markdown files with data in current directory";
+ let sdocs = Cmdliner.Manpage.s_common_options;
+ let exits = Cmdliner.Term.default_exits;
+ let man = [
+   `S(Cmdliner.Manpage.s_description),
+   `P("Instantiates documents written in Markdown with business data injected from
+       JSON or YAML files, i.e. produces a new Markdown file without mustache variables. By default,
+       instantiates files in the current directory."),
+   `Blocks(help_secs)
+ ];
+ (
+   Cmdliner.Term.(ret(const(instantiate) $ copts_t)),
+   Cmdliner.Term.info("instantiate", ~doc, ~sdocs, ~exits, ~man)
+ );
+};
+
 let compile_cmd = {
   let doc = "compiles files in current directory";
   let sdocs = Cmdliner.Manpage.s_common_options;
@@ -365,7 +426,7 @@ let default_cmd = {
 };
 
 // Available legal commands.
-let cmds = [help_cmd, compile_cmd, print_cmd];
+let cmds = [help_cmd, instantiate_cmd, compile_cmd, print_cmd];
 
 // Execute default command if no argument given
 // Otherwise, execute the specified command.
