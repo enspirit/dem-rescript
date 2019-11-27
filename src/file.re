@@ -177,9 +177,9 @@ let robust_write = (what, filename, content) => {
   };
 };
 
-let replace_extension = (~before, ~after, filename) => {
+let make_absolute_filepath = (~ext_before="", ~ext_after="", filename) => {
   let dir = Node.Path.dirname(filename);
-  let name = Node.Path.basename_ext(filename, before) ++ after;
+  let name = Node.Path.basename_ext(filename, ext_before) ++ ext_after;
   Node.Path.join2(dir, name);
 };
 
@@ -193,10 +193,29 @@ let expand = (json_data_opt, filename_opt) => {
   }
 };
 
+let write_md = (~output_filename_opt, text_filename, md) => {
+  let output_filename = switch (output_filename_opt) {
+  | None => make_absolute_filepath(~ext_before=".md", ~ext_after="_instantiated.md", text_filename)
+  | Some(md_filename) => md_filename
+  };
+  robust_write("md", output_filename, md);
+  output_filename;
+};
+
 let write_html = (~output_filename_opt, text_filename, html) => {
   let output_filename = switch (output_filename_opt) {
-  | None => replace_extension(~before="md", ~after="html", text_filename)
-  | Some(pdf_filename) => replace_extension(~before="pdf", ~after="html", pdf_filename)
+  | None => make_absolute_filepath(~ext_before="md", ~ext_after="html", text_filename)
+  | Some(output_filename) =>
+    switch (extension(output_filename)) {
+    | Some("html") => make_absolute_filepath(~ext_before="html", ~ext_after="html", output_filename)
+    | Some("pdf")  => make_absolute_filepath(~ext_before="pdf", ~ext_after="html", output_filename)
+    | Some(ext)    =>
+      Logger.warn({j|Unexpected extension in $output_filename.|j});
+      make_absolute_filepath(~ext_before=ext, ~ext_after="html", output_filename)
+    | None         =>
+      Logger.error({j|Extension not found in $output_filename.|j});
+      make_absolute_filepath(~ext_before="md", ~ext_after="html", text_filename)
+    }
   };
   robust_write("html", output_filename, html);
   output_filename;

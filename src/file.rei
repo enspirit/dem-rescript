@@ -10,6 +10,7 @@ let read_sass_style: string => option(string);
 let read_style: option(string) => option(string);
 let find: (~root:string=?, string) => option(string);
 let build_partials: (~root:string=?, ~partials:Js.Dict.t(string)=?, list(string)) => Js.Dict.t(string);
-let replace_extension: (~before:string, ~after:string, string) => string;
+let make_absolute_filepath: (~ext_before:string=?, ~ext_after:string=?, string) => string;
 let expand: (option(Js.Json.t), option(string)) => option(string);
+let write_md: (~output_filename_opt:option(string), string, string) => string;
 let write_html: (~output_filename_opt:option(string), string, string) => string;
