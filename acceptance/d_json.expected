@@ -1,0 +1,17 @@
+<html>
+  <head>
+    <style></style>
+  </head>
+  <body>
+    <article id="bucklescript-executes-mustache-using-json-data">
+      <h1>Bucklescript executes Mustache using json data.</h1>
+    </article>
+    <article id="just-do-it"><h1>just do it</h1></article>
+    <article id="my-name-is-joe"><h1>my name is Joe</h1></article>
+    <article id="blackworm">
+      <h1>Blackworm</h1>
+      <p>A blackworm is a blackworm.</p>
+    </article>
+  </body>
+</html>
+
