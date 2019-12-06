@@ -1,0 +1,17 @@
+<html>
+  <head>
+    <style></style>
+  </head>
+  <body>
+    <article id="bucklescript-executes-mustache-using-yaml-data">
+      <h1>Bucklescript executes Mustache using yaml data.</h1>
+    </article>
+    <article id="just-it"><h1>just it</h1></article>
+    <article id="my-name-is"><h1>my name is</h1></article>
+    <article id="blackworm">
+      <h1>Blackworm</h1>
+      <p>A blackworm is a blackworm.</p>
+    </article>
+  </body>
+</html>
+

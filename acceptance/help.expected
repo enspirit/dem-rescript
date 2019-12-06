@@ -1,0 +1,97 @@
+NAME
+       dem - Doc-e-mate - your document's best friend.
+
+SYNOPSIS
+       dem COMMAND ...
+
+DESCRIPTION
+       Generate and print documents written in Markdown, styled in CSS, with
+       business data injected from JSON or YAML files. By default, when no
+       command is specified, the compile command is called.
+
+COMMANDS
+       compile
+           compiles files in current directory
+
+       help
+           display help about doc-e-mate and its commands
+
+       instantiate
+           instantiates markdown files with data in current directory
+
+       print
+           print a pdf document after compiling files in current directory
+
+OPTIONS
+       --async
+           Allow asynchronized data source. When enabled, allow using some
+           asynchronized source of data. Obviously, this has an effect when
+           using a javascript data file only. Also, do not use this option if
+           your javascript data file does not export a promise, doc-e-mate
+           would fail in that case.
+
+       -d FILE, --data=FILE
+           Get document data from FILE. If FILE does not exist, nor its
+           default implicit replacements, an empty data will be used instead.
+
+       -h FILE, --html-template=FILE (absent=index.html.tpl)
+           Compile document using HTML template specified in FILE. If FILE
+           does not exist, nor its default implicit replacement, a very basic
+           HTML structure will be used instead.
+
+       -o [FILE], --output[=FILE] (default=index.html)
+           Save document in FILE. When not used, name the document after the
+           text source file.
+
+       --publipost
+           Enable publiposting. Compile or print multiple instances of the
+           same document using as many dataset as necessary. In this case, a
+           javascript data file must be given as parameter which exports an
+           array containing the data objects. A document will be generated
+           for each object.
+
+       -s FILE, --style=FILE
+           Style document as specified in FILE. If FILE does not exist, nor
+           its default implicit replacements, an empty style will be used
+           instead.
+
+       -t FILE, --text=FILE (absent=index.md)
+           Get document text from FILE. If FILE does not exist, nor its
+           default implicit replacement, an empty content will be used
+           instead.
+
+       -w, --watch
+           Enable watch mode. Watches for modification of source files -
+           which are files with the following extensions: md, json, yml, js,
+           css, tpl - located in directories of argument source files, and
+           their subdirectories. When a modification is detected, the dem
+           command is run again. If no source file is indicated, and no
+           default file can be found, the watch mode is not enabled at all.
+
+COMMON OPTIONS
+       These options are common to all commands.
+
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of `auto',
+           `pager', `groff' or `plain'. With `auto', the format is `pager` or
+           `plain' whenever the TERM env var is `dumb' or undefined.
+
+       --version
+           Show version information.
+
+MORE HELP
+       Use `dem COMMAND --help' for help on a single command.
+       Use `dem help patterns' for help on patch matching.
+       Use `dem help environment' for help on environment variables.
+
+EXIT STATUS
+       dem exits with the following status:
+
+       0   on success.
+
+       124 on command line parsing errors.
+
+       125 on unexpected internal errors (bugs).
+
+BUGS
+       Please report bugs at https://github.com/enspirit/dem-bs
