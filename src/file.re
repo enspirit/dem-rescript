@@ -170,8 +170,29 @@ let rec build_partials = (~root:string=".", ~partials: Js.Dict.t(string)=Js.Dict
   }
 };
 
+// bindings to NodeJS.fs.mkdirSync
+[@bs.deriving abstract]
+type mkdir_options = {
+  [@bs.optional]
+  recursive: bool,
+};
+
+[@bs.module "fs"] external mkdirSync: string => ~options:mkdir_options=? => unit = "mkdirSync";
+let mkdirSync = path => {
+  let options = mkdir_options(~recursive=true, ());
+  mkdirSync(path, ~options);
+};
+
+let ensure_path = (filename) => {
+  let dir = Node.Path.dirname(filename);
+  try (mkdirSync(dir)) {
+  | Caml_js_exceptions.Error(e) => Logger.error @@ Logger.format_caml_js_exn(e); ()
+  }
+};
+
 let robust_write = (what, filename, content) => {
   Logger.info({j|Writing $what in "$filename".|j});
+  ensure_path(filename);
   try (Node.Fs.writeFileAsUtf8Sync(filename, content)) {
   | Caml_js_exceptions.Error(e) => Logger.error @@ Logger.format_caml_js_exn(e); ()
   };
