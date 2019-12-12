@@ -1,6 +1,6 @@
 open Sugar;
 
-let markdownItInstance = MarkdownIt.createMarkdownIt();
+let markdownItInstance = MarkdownIt.createMarkdownIt(~html=true, ());
 let markdownIt = text => MarkdownIt.render(markdownItInstance, text);
 
 let mustache = (text, data, partials_opt) => {
