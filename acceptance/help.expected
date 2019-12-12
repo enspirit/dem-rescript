@@ -60,6 +60,10 @@ OPTIONS
            default implicit replacement, an empty content will be used
            instead.
 
+       -u URL, --base-url=URL
+           Set the base for relative URLs in the text source (and HTML output
+           as well). This is exactly the same option as in weasyprint.
+
        -w, --watch
            Enable watch mode. Watches for modification of source files -
            which are files with the following extensions: md, json, yml, js,

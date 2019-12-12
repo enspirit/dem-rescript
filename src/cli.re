@@ -1,7 +1,7 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
-let version = "0.10.2";
+let version = "0.11.0";
 
 open Sugar;
 
@@ -16,6 +16,7 @@ type copts = {
   text_filename: string,
   data_filename_opt: option(string),
   watch_mode: bool,
+  base_url_opt: option(string),
   output_filename_opt: option(string),
   publipost: bool,
   async: bool
@@ -25,6 +26,7 @@ type t_instantiation_src = {
   text_opt: option(string),
   partials: Js.Dict.t(string),
   data_opt: option(Js.Json.t),
+  expanded_base_url_opt: option(string),
   expanded_output_filename_opt: option(string)
 };
 
@@ -34,11 +36,13 @@ type t_compilation_src = {
   data_opt: option(Js.Json.t),
   template_opt: option(string),
   style_opt: option(string),
+  expanded_base_url_opt: option(string),
   expanded_output_filename_opt: option(string)
 };
 
 type t_print_src = {
   html: string,
+  expanded_base_url_opt: option(string),
   expanded_output_filename_opt: option(string)
 };
 
@@ -88,8 +92,9 @@ let load_instantiation_sources = (copts, data_opt) => {
   let text_opt = File.read_text(copts.text_filename);
   let root_partials_dep = App.partials_dependencies(text_opt || "");
   let partials = File.build_partials(~root=copts.text_filename, root_partials_dep);
+  let expanded_base_url_opt = File.expand(data_opt, copts.base_url_opt);
   let expanded_output_filename_opt = File.expand(data_opt, copts.output_filename_opt);
-  { text_opt, partials, data_opt, expanded_output_filename_opt }
+  { text_opt, partials, data_opt, expanded_base_url_opt, expanded_output_filename_opt }
 };
 
 let load_compilation_sources = (copts, data_opt) => {
@@ -102,6 +107,7 @@ let load_compilation_sources = (copts, data_opt) => {
     data_opt,
     template_opt,
     style_opt,
+    expanded_base_url_opt:i_src.expanded_base_url_opt,
     expanded_output_filename_opt:i_src.expanded_output_filename_opt
   };
 };
@@ -144,7 +150,7 @@ let execute = (~copts, ~read:((copts, 'a) => 'b), ~transform:((copts, 'b) => 'c)
 
 let instantiate = (copts) => {
   let read = load_instantiation_sources;
-  let transform = (copts, src:t_instantiation_src) => {
+  let transform = (_, src:t_instantiation_src) => {
     let markdown = App.instantiate_body(src.text_opt, src.data_opt, Some(src.partials));
     {
       text_opt:Some(markdown),
@@ -152,6 +158,7 @@ let instantiate = (copts) => {
       data_opt:src.data_opt,
       template_opt:None,
       style_opt:None,
+      expanded_base_url_opt:src.expanded_base_url_opt,
       expanded_output_filename_opt:src.expanded_output_filename_opt
     };
   };
@@ -168,9 +175,13 @@ let instantiate = (copts) => {
 
 let compile = (copts) => {
   let read = load_compilation_sources;
-  let transform = (copts, src:t_compilation_src) => {
+  let transform = (_, src:t_compilation_src) => {
     let html = App.compile(src.template_opt, src.style_opt, src.text_opt, src.data_opt, Some(src.partials));
-    { html, expanded_output_filename_opt:src.expanded_output_filename_opt };
+    {
+      html,
+      expanded_base_url_opt:src.expanded_base_url_opt,
+      expanded_output_filename_opt:src.expanded_output_filename_opt
+    };
   };
   let print = (copts, src:t_print_src) => {
     let output_filename_opt = src.expanded_output_filename_opt;
@@ -184,13 +195,17 @@ let compile = (copts) => {
 
 let print = (copts) => {
   let read = load_compilation_sources;
-  let transform = (copts, src:t_compilation_src) => {
+  let transform = (_, src:t_compilation_src) => {
     let html = App.compile(src.template_opt, src.style_opt, src.text_opt, src.data_opt, Some(src.partials));
-    { html, expanded_output_filename_opt:src.expanded_output_filename_opt };
+    {
+      html,
+      expanded_base_url_opt:src.expanded_base_url_opt,
+      expanded_output_filename_opt:src.expanded_output_filename_opt
+    };
   };
   let print = (copts, src:t_print_src) => {
     let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, copts.text_filename, src.html);
-    Weasyprint.print(html_filename, src.expanded_output_filename_opt);
+    Weasyprint.print(html_filename, src.expanded_base_url_opt, src.expanded_output_filename_opt);
   };
   execute(~copts, ~read, ~transform, ~print);
 };
@@ -198,12 +213,13 @@ let print = (copts) => {
 /****************************************************************************
  * Functions called by CLI commands that are implemented on the CLI side
  */
-let copts = (template_filename, style_filename_opt, text_filename, data_filename_opt, watch_mode, output_filename_opt, publipost, async) => {
+let copts = (template_filename, style_filename_opt, text_filename, data_filename_opt, watch_mode, base_url_opt, output_filename_opt, publipost, async) => {
   template_filename,
   style_filename_opt,
   text_filename,
   data_filename_opt,
   watch_mode,
+  base_url_opt,
   output_filename_opt,
   publipost,
   async
@@ -263,6 +279,16 @@ let copts_t = {
       & info(["w", "watch"], ~doc)
     );
   };
+  let base_url = {
+    let docv = "URL";
+    let doc = "Set the base for relative URLs in the text source (and HTML output as well). This is exactly
+      the same option as in weasyprint.";
+    Cmdliner.Arg.(
+      value
+      & opt(some(string), None)
+      & info(["u", "base-url"], ~docv, ~doc)
+    );
+  };
   let output_filename = {
     let docv = "FILE";
     let doc = "Save document in $(docv). When not used, name the document after the text source file.";
@@ -298,6 +324,7 @@ let copts_t = {
   $ text_filename
   $ data_filename
   $ watch_mode
+  $ base_url
   $ output_filename
   $ publipost
   $ async);
