@@ -7,3 +7,4 @@ let warn: (~buffer: Buffer.t=?, string) => unit;
 let error: (~buffer: Buffer.t=?, string) => unit;
 let fatal: (~buffer: Buffer.t=?, string) => unit;
 let save: (~buffer: Buffer.t=?, ~filename: string=?, unit) => unit;
+let print_stderr: (~buffer: Buffer.t=?, unit) => unit;

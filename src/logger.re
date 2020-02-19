@@ -59,6 +59,12 @@ let fatal = (~buffer=?, msg) => {
 
 let save = (~buffer=default_buffer, ~filename=default_logfile, ()) => {
   try (Node.Fs.writeFileAsUtf8Sync(filename, Buffer.contents(buffer))) {
-  | Caml_js_exceptions.Error(e) => Js.Console.error({j|$e.|j}); // FIXME: this is written to stderr and should be displayed in case the user selects some DEBUG mode only
+  | Caml_js_exceptions.Error(e) => Js.Console.error({j|$e.|j});
+  };
+};
+
+let print_stderr = (~buffer=default_buffer, ()) => {
+  try (Js.Console.error(Buffer.contents(buffer))) {
+  | Caml_js_exceptions.Error(e) => Js.Console.error({j|$e.|j});
   };
 };

@@ -1,13 +1,9 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
-let version = "0.12.0";
+let version = "0.13.0";
 
 open Sugar;
-
-let close = () => {
-  Logger.save();
-};
 
 // common options type
 type copts = {
@@ -140,7 +136,7 @@ let execute = (~copts, ~read:((copts, 'a) => 'b), ~transform:((copts, 'b) => 'c)
       if (copts.watch_mode) {
         directories(copts) |> List.iter(d => watch_directory_rec(d, ignore_promise(do_it)));
       };
-      close();
+      Logger.print_stderr();
     });
     `Ok(result_promise);
   } {
