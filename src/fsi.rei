@@ -3,11 +3,16 @@ type result =
   | Error(string)
 ;
 
+type filename_or_content('a) =
+| Filename(string)
+| Content('a)
+;
+
 type copts = {
-  template_filename_opt: option(string),
-  style_filename_opt: option(string),
-  text_filename_opt: option(string),
-  data_filename_opt: option(string),
+  template_fco: option(filename_or_content(App.t_template)),
+  style_fco: option(filename_or_content(App.t_style)),
+  text_fco: option(filename_or_content(App.t_text)),
+  data_fco: option(filename_or_content(App.t_data)),
   watch_mode: bool,
   base_url_opt: option(string),
   output_filename_opt: option(string),
@@ -39,7 +44,16 @@ type t_print_src = {
   expanded_output_filename_opt: option(string)
 };
 
-let copts: (option(string), option(string), option(string), option(string), bool, option(string), option(string), bool, bool) => copts;
+let copts: (option(filename_or_content(App.t_template)),
+            option(filename_or_content(App.t_style)),
+            option(filename_or_content(App.t_text)),
+            option(filename_or_content(App.t_data)),
+            bool,
+            option(string),
+            option(string),
+            bool,
+            bool)
+           => copts;
 
 let instantiate: copts => result;
 let compile: copts => result;

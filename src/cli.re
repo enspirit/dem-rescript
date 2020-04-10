@@ -11,6 +11,18 @@ let copts_t_of_fsi_result = (f) => (copts) => switch (f(copts)) {
 | Fsi.Error(m) => `Error(false, m)
 };
 
+let fco_of_option_filename = o => {
+  o -> Belt.Option.map(f => Fsi.Filename(f))
+};
+
+let copts = (template_filename_opt, style_filename_opt, text_filename_opt, data_filename_opt, watch_mode, base_url_opt, output_filename_opt, publipost, async) => {
+  let tpl_fco = template_filename_opt |> fco_of_option_filename;
+  let style_fco = style_filename_opt |> fco_of_option_filename;
+  let text_fco = text_filename_opt |> fco_of_option_filename;
+  let data_fco = data_filename_opt |> fco_of_option_filename;
+  Fsi.copts(tpl_fco, style_fco, text_fco, data_fco, watch_mode, base_url_opt, output_filename_opt, publipost, async);
+};
+
 /* Options common to all commands */
 let copts_t = {
   let _ = Cmdliner.Manpage.s_common_options;
@@ -104,7 +116,7 @@ let copts_t = {
       & info(["async"], ~doc)
     );
   };
-  Cmdliner.Term.(const(Fsi.copts)
+  Cmdliner.Term.(const(copts)
   $ template_filename
   $ style_filename
   $ text_filename

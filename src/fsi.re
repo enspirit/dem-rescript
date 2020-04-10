@@ -5,12 +5,47 @@ type result =
   | Error(string)
 ;
 
+type filename_or_content('a) =
+| Filename(string)
+| Content('a)
+;
+
+let fo_of_fco = (fco) => switch (fco) {
+| Some(Filename(f)) => Some(f)
+| _ => None
+};
+
+let read_fco1 = (fco, read) => {
+  fco -> Belt.Option.flatMap(fc => switch (fc) {
+  | Filename(filename) => read(filename)
+  | Content(content)   => Some(content)
+  });
+};
+
+let read_fco2 = (fco, read) => switch (fco) {
+| Some(Content(content)) => Some(content)
+| Some(Filename(filename)) => read(Some(filename))
+| None => read(None)
+};
+
+let promise_read_data_array = (fco, read) => switch (fco) {
+| Some(Content(content)) => promise(Sugar.ensure_array(content))
+| Some(Filename(filename)) => read(Some(filename))
+| None => read(None)
+};
+
+let promise_read_single_data = (fco, read) => switch (fco) {
+| Some(Content(content)) => promise(Some(content))
+| Some(Filename(filename)) => read(Some(filename))
+| None => read(None)
+};
+
 // common options type
 type copts = {
-  template_filename_opt: option(string),
-  style_filename_opt: option(string),
-  text_filename_opt: option(string),
-  data_filename_opt: option(string),
+  template_fco: option(filename_or_content(App.t_template)),
+  style_fco: option(filename_or_content(App.t_style)),
+  text_fco: option(filename_or_content(App.t_text)),
+  data_fco: option(filename_or_content(App.t_data)),
   watch_mode: bool,
   base_url_opt: option(string),
   output_filename_opt: option(string),
@@ -42,11 +77,11 @@ type t_print_src = {
   expanded_output_filename_opt: option(string)
 };
 
-let copts = (template_filename_opt, style_filename_opt, text_filename_opt, data_filename_opt, watch_mode, base_url_opt, output_filename_opt, publipost, async) => {
-  template_filename_opt,
-  style_filename_opt,
-  text_filename_opt,
-  data_filename_opt,
+let copts = (template_fco, style_fco, text_fco, data_fco, watch_mode, base_url_opt, output_filename_opt, publipost, async) => {
+  template_fco,
+  style_fco,
+  text_fco,
+  data_fco,
   watch_mode,
   base_url_opt,
   output_filename_opt,
@@ -73,10 +108,10 @@ let directories = copts => {
     !Belt.List.some(l, s2 => s2 != s1 && Js.String.startsWith(s2, s1))
   };
   [
-    copts.template_filename_opt,
-    copts.style_filename_opt,
-    copts.text_filename_opt,
-    copts.data_filename_opt,
+    fo_of_fco(copts.template_fco),
+    fo_of_fco(copts.style_fco),
+    fo_of_fco(copts.text_fco),
+    fo_of_fco(copts.data_fco),
     copts.output_filename_opt
   ]
   -> Belt.List.map(f => {
@@ -94,9 +129,9 @@ let directories = copts => {
 };
 
 let load_instantiation_sources = (copts, data_opt) => {
-  let text_opt = copts.text_filename_opt -> Belt.Option.flatMap(File.read_text);
+  let text_opt = copts.text_fco -> read_fco1(File.read_text);
   let root_partials_dep = App.partials_dependencies(text_opt || "");
-  let partials = File.build_partials(~root=?copts.text_filename_opt, root_partials_dep);
+  let partials = File.build_partials(~root=?fo_of_fco(copts.text_fco), root_partials_dep);
   let expanded_base_url_opt = File.expand(data_opt, copts.base_url_opt);
   let expanded_output_filename_opt = File.expand(data_opt, copts.output_filename_opt);
   { text_opt, partials, data_opt, expanded_base_url_opt, expanded_output_filename_opt }
@@ -104,8 +139,8 @@ let load_instantiation_sources = (copts, data_opt) => {
 
 let load_compilation_sources = (copts, data_opt) => {
   let i_src = load_instantiation_sources(copts, data_opt);
-  let template_opt = copts.template_filename_opt -> Belt.Option.flatMap(File.read_template);
-  let style_opt = File.read_style(copts.style_filename_opt);
+  let template_opt = copts.template_fco -> read_fco1(File.read_template);
+  let style_opt = copts.style_fco -> read_fco2(File.read_style);
   {
     text_opt:i_src.text_opt,
     partials:i_src.partials,
@@ -119,8 +154,8 @@ let load_compilation_sources = (copts, data_opt) => {
 
 let execute = (~copts, ~read:((copts, 'a) => 'b), ~transform:((copts, 'b) => 'c), ~print:((copts, 'c) => unit)) => {
   let do_it = () => {
-    if (copts.publipost && copts.data_filename_opt != None) {
-      File.read_data(~batch=true, ~async=copts.async, copts.data_filename_opt)
+    if (copts.publipost && copts.data_fco != None) {
+      copts.data_fco -> promise_read_data_array(File.read_data(~batch=true, ~async=copts.async))
       |> then_resolve(data => {
         data
         |> List.map(data => {
@@ -131,7 +166,7 @@ let execute = (~copts, ~read:((copts, 'a) => 'b), ~transform:((copts, 'b) => 'c)
         |> Belt.List.toArray;
       });
     } else {
-      File.read_single_data(copts.data_filename_opt)
+      copts.data_fco -> promise_read_single_data(File.read_single_data)
       |> then_resolve(data => {
         [|read(copts, data)
         |> transform(copts, _)
@@ -172,7 +207,7 @@ let instantiate = (copts) => {
     let Some(markdown) = src.text_opt;
     switch(output_filename_opt) {
     | None => Js.log(markdown);
-    | Some(_) => ignore(File.write_md(~output_filename_opt, ~text_filename=?copts.text_filename_opt, markdown));
+    | Some(_) => ignore(File.write_md(~output_filename_opt, ~text_filename=?fo_of_fco(copts.text_fco), markdown));
     };
   };
   execute(~copts, ~read, ~transform, ~print);
@@ -192,7 +227,7 @@ let compile = (copts) => {
     let output_filename_opt = src.expanded_output_filename_opt;
     switch(output_filename_opt) {
     | None => Js.log(src.html);
-    | Some(_) => ignore(File.write_html(~output_filename_opt, ~text_filename=?copts.text_filename_opt, src.html));
+    | Some(_) => ignore(File.write_html(~output_filename_opt, ~text_filename=?fo_of_fco(copts.text_fco), src.html));
     }
   };
   execute(~copts, ~read, ~transform, ~print);
@@ -209,7 +244,7 @@ let print = (copts) => {
     };
   };
   let print = (copts, src:t_print_src) => {
-    let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, ~text_filename=?copts.text_filename_opt, src.html);
+    let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, ~text_filename=?fo_of_fco(copts.text_fco), src.html);
     Weasyprint.print(html_filename, src.expanded_base_url_opt, src.expanded_output_filename_opt);
   };
   execute(~copts, ~read, ~transform, ~print);
