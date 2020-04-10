@@ -57,4 +57,4 @@ let copts: (option(filename_or_content(App.t_template)),
 
 let instantiate: copts => result;
 let compile: copts => result;
-let print: copts => result;
+let print: (copts, bool) => result;

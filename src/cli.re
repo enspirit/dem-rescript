@@ -11,6 +11,11 @@ let copts_t_of_fsi_result = (f) => (copts) => switch (f(copts)) {
 | Fsi.Error(m) => `Error(false, m)
 };
 
+let copts_t_of_fsi_print_result = (f) => (copts, pipe) => switch (f(copts, pipe)) {
+| Fsi.Ok(p) => `Ok(p)
+| Fsi.Error(m) => `Error(false, m)
+};
+
 let fco_of_option_filename = o => {
   o -> Belt.Option.map(f => Fsi.Filename(f))
 };
@@ -198,20 +203,28 @@ let compile_cmd = {
 };
 
 let print_cmd = {
- let doc = "print a pdf document after compiling files in current directory";
- let sdocs = Cmdliner.Manpage.s_common_options;
- let exits = Cmdliner.Term.default_exits;
- let man = [
+  let pipe = {
+    let doc = "Prevent from writing result into file. Instead, pipes to standard output when enabled."
+    Cmdliner.Arg.(
+      value
+      & flag
+      & info(["pipe"], ~doc)
+    );
+  };
+  let doc = "print a pdf document after compiling files in current directory";
+  let sdocs = Cmdliner.Manpage.s_common_options;
+  let exits = Cmdliner.Term.default_exits;
+  let man = [
    `S(Cmdliner.Manpage.s_description),
    `P("Prints a PDF document after compiling a doc-e-mate source written with Markdown, styled in CSS, with
        business data injected from JSON or YAML files. By default, compiles text, data, template and style
        files in the current directory."),
    `Blocks(help_secs)
- ];
- (
-   Cmdliner.Term.(ret(const(Fsi.print |> copts_t_of_fsi_result) $ copts_t)),
+  ];
+  (
+   Cmdliner.Term.(ret(const(Fsi.print |> copts_t_of_fsi_print_result) $ copts_t $ pipe)),
    Cmdliner.Term.info("print", ~doc, ~sdocs, ~exits, ~man)
- );
+  );
 };
 
 let help_cmd = {

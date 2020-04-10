@@ -1,18 +1,31 @@
 open Sugar;
 
+let base_url_param = (base_url_opt) => switch (base_url_opt) {
+| None => ""
+| Some(base_url) => {j|-u $base_url|j}
+};
+
 let print = (html_filename, base_url_opt, output_filename_opt) => {
-  let base_url_param = switch (base_url_opt) {
-  | None => ""
-  | Some(base_url) => {j|-u $base_url|j}
-  };
+  let base_url_param = base_url_param(base_url_opt);
   let output_filename = output_filename_opt || (Node.Path.basename_ext(html_filename, "html") ++ "pdf")
   Logger.info({j|Printing document in "$output_filename" with weasyprint.|j});
   File.ensure_path(output_filename);
-  let res = Execa.commandSync({j|weasyprint $html_filename $output_filename -e utf-8 $base_url_param -v|j}, ());
+  let res = Execa.commandSync({j|weasyprint -e utf-8 $base_url_param -v $html_filename $output_filename|j}, ());
   let exit_code = Execa.exitCodeGet(res);
   switch (exit_code) {
   | 0 => ()
   | 127 => Logger.error("weasyprint command not found. Please check your weasyprint installation." ++ Execa.stderrGet(res));
   | _ => Logger.fatal("weasyprint returned an unexpected error. Please report to yoann.guyot@enspirit.be" ++ Execa.stderrGet(res));
   }
-}
+};
+
+let pipe = (html_filename, base_url_opt) => {
+  let base_url_param = base_url_param(base_url_opt);
+  let res = Execa.commandSync({j|weasyprint -f pdf -e utf-8 $base_url_param $html_filename -|j}, ());
+  let exit_code = Execa.exitCodeGet(res);
+  switch (exit_code) {
+  | 0 => Js.log(Execa.stdoutGet(res));
+  | 127 => Logger.error("weasyprint command not found. Please check your weasyprint installation." ++ Execa.stderrGet(res));
+  | _ => Logger.fatal("weasyprint returned an unexpected error. Please report to yoann.guyot@enspirit.be" ++ Execa.stderrGet(res));
+  }
+};

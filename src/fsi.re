@@ -233,7 +233,7 @@ let compile = (copts) => {
   execute(~copts, ~read, ~transform, ~print);
 };
 
-let print = (copts) => {
+let print = (copts, pipe) => {
   let read = load_compilation_sources;
   let transform = (_, src:t_compilation_src) => {
     let html = App.compile(src.template_opt, src.style_opt, src.text_opt, src.data_opt, Some(src.partials));
@@ -245,7 +245,10 @@ let print = (copts) => {
   };
   let print = (copts, src:t_print_src) => {
     let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, ~text_filename=?fo_of_fco(copts.text_fco), src.html);
-    Weasyprint.print(html_filename, src.expanded_base_url_opt, src.expanded_output_filename_opt);
+    switch (pipe) {
+    | false  => Weasyprint.print(html_filename, src.expanded_base_url_opt, src.expanded_output_filename_opt);
+    | true => Weasyprint.pipe(html_filename, src.expanded_base_url_opt);
+    }
   };
   execute(~copts, ~read, ~transform, ~print);
 };
