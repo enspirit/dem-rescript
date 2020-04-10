@@ -13,5 +13,5 @@ let build_partials: (~root:string=?, ~partials:Js.Dict.t(string)=?, list(string)
 let make_absolute_filepath: (~ext_before:string=?, ~ext_after:string=?, string) => string;
 let expand: (option(Js.Json.t), option(string)) => option(string);
 let ensure_path: string => unit;
-let write_md: (~output_filename_opt:option(string), string, string) => string;
-let write_html: (~output_filename_opt:option(string), string, string) => string;
+let write_md: (~output_filename_opt:option(string), ~text_filename:string=?, string) => string;
+let write_html: (~output_filename_opt:option(string), ~text_filename:string=?, string) => string;

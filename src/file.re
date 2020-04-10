@@ -214,7 +214,7 @@ let expand = (json_data_opt, filename_opt) => {
   }
 };
 
-let write_md = (~output_filename_opt, text_filename, md) => {
+let write_md = (~output_filename_opt, ~text_filename="index.md", md) => {
   let output_filename = switch (output_filename_opt) {
   | None => make_absolute_filepath(~ext_before=".md", ~ext_after="_instantiated.md", text_filename)
   | Some(md_filename) => md_filename
@@ -223,7 +223,7 @@ let write_md = (~output_filename_opt, text_filename, md) => {
   output_filename;
 };
 
-let write_html = (~output_filename_opt, text_filename, html) => {
+let write_html = (~output_filename_opt, ~text_filename="index.md", html) => {
   let output_filename = switch (output_filename_opt) {
   | None => make_absolute_filepath(~ext_before="md", ~ext_after="html", text_filename)
   | Some(output_filename) =>

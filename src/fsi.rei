@@ -6,7 +6,7 @@ type result =
 type copts = {
   template_filename_opt: option(string),
   style_filename_opt: option(string),
-  text_filename: string,
+  text_filename_opt: option(string),
   data_filename_opt: option(string),
   watch_mode: bool,
   base_url_opt: option(string),
@@ -39,7 +39,7 @@ type t_print_src = {
   expanded_output_filename_opt: option(string)
 };
 
-let copts: (option(string), option(string), string, option(string), bool, option(string), option(string), bool, bool) => copts;
+let copts: (option(string), option(string), option(string), option(string), bool, option(string), option(string), bool, bool) => copts;
 
 let instantiate: copts => result;
 let compile: copts => result;

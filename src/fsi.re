@@ -9,7 +9,7 @@ type result =
 type copts = {
   template_filename_opt: option(string),
   style_filename_opt: option(string),
-  text_filename: string,
+  text_filename_opt: option(string),
   data_filename_opt: option(string),
   watch_mode: bool,
   base_url_opt: option(string),
@@ -42,10 +42,10 @@ type t_print_src = {
   expanded_output_filename_opt: option(string)
 };
 
-let copts = (template_filename_opt, style_filename_opt, text_filename, data_filename_opt, watch_mode, base_url_opt, output_filename_opt, publipost, async) => {
+let copts = (template_filename_opt, style_filename_opt, text_filename_opt, data_filename_opt, watch_mode, base_url_opt, output_filename_opt, publipost, async) => {
   template_filename_opt,
   style_filename_opt,
-  text_filename,
+  text_filename_opt,
   data_filename_opt,
   watch_mode,
   base_url_opt,
@@ -75,7 +75,7 @@ let directories = copts => {
   [
     copts.template_filename_opt,
     copts.style_filename_opt,
-    Some(copts.text_filename),
+    copts.text_filename_opt,
     copts.data_filename_opt,
     copts.output_filename_opt
   ]
@@ -94,9 +94,9 @@ let directories = copts => {
 };
 
 let load_instantiation_sources = (copts, data_opt) => {
-  let text_opt = File.read_text(copts.text_filename);
+  let text_opt = copts.text_filename_opt -> Belt.Option.flatMap(File.read_text);
   let root_partials_dep = App.partials_dependencies(text_opt || "");
-  let partials = File.build_partials(~root=copts.text_filename, root_partials_dep);
+  let partials = File.build_partials(~root=?copts.text_filename_opt, root_partials_dep);
   let expanded_base_url_opt = File.expand(data_opt, copts.base_url_opt);
   let expanded_output_filename_opt = File.expand(data_opt, copts.output_filename_opt);
   { text_opt, partials, data_opt, expanded_base_url_opt, expanded_output_filename_opt }
@@ -172,7 +172,7 @@ let instantiate = (copts) => {
     let Some(markdown) = src.text_opt;
     switch(output_filename_opt) {
     | None => Js.log(markdown);
-    | Some(_) => ignore(File.write_md(~output_filename_opt, copts.text_filename, markdown));
+    | Some(_) => ignore(File.write_md(~output_filename_opt, ~text_filename=?copts.text_filename_opt, markdown));
     };
   };
   execute(~copts, ~read, ~transform, ~print);
@@ -192,7 +192,7 @@ let compile = (copts) => {
     let output_filename_opt = src.expanded_output_filename_opt;
     switch(output_filename_opt) {
     | None => Js.log(src.html);
-    | Some(_) => ignore(File.write_html(~output_filename_opt, copts.text_filename, src.html));
+    | Some(_) => ignore(File.write_html(~output_filename_opt, ~text_filename=?copts.text_filename_opt, src.html));
     }
   };
   execute(~copts, ~read, ~transform, ~print);
@@ -209,7 +209,7 @@ let print = (copts) => {
     };
   };
   let print = (copts, src:t_print_src) => {
-    let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, copts.text_filename, src.html);
+    let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, ~text_filename=?copts.text_filename_opt, src.html);
     Weasyprint.print(html_filename, src.expanded_base_url_opt, src.expanded_output_filename_opt);
   };
   execute(~copts, ~read, ~transform, ~print);

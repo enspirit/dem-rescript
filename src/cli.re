@@ -40,7 +40,7 @@ let copts_t = {
       replacement, an empty content will be used instead.";
     Cmdliner.Arg.(
       value
-      & opt(string, "index.md")
+      & opt(some(string), Some("index.md"))
       & info(["t", "text"], ~docv, ~doc)
     );
   };
