@@ -7,7 +7,7 @@ type result =
 
 // common options type
 type copts = {
-  template_filename: string,
+  template_filename_opt: option(string),
   style_filename_opt: option(string),
   text_filename: string,
   data_filename_opt: option(string),
@@ -42,8 +42,8 @@ type t_print_src = {
   expanded_output_filename_opt: option(string)
 };
 
-let copts = (template_filename, style_filename_opt, text_filename, data_filename_opt, watch_mode, base_url_opt, output_filename_opt, publipost, async) => {
-  template_filename,
+let copts = (template_filename_opt, style_filename_opt, text_filename, data_filename_opt, watch_mode, base_url_opt, output_filename_opt, publipost, async) => {
+  template_filename_opt,
   style_filename_opt,
   text_filename,
   data_filename_opt,
@@ -73,7 +73,7 @@ let directories = copts => {
     !Belt.List.some(l, s2 => s2 != s1 && Js.String.startsWith(s2, s1))
   };
   [
-    Some(copts.template_filename),
+    copts.template_filename_opt,
     copts.style_filename_opt,
     Some(copts.text_filename),
     copts.data_filename_opt,
@@ -104,7 +104,7 @@ let load_instantiation_sources = (copts, data_opt) => {
 
 let load_compilation_sources = (copts, data_opt) => {
   let i_src = load_instantiation_sources(copts, data_opt);
-  let template_opt = File.read_template(copts.template_filename);
+  let template_opt = copts.template_filename_opt -> Belt.Option.flatMap(File.read_template);
   let style_opt = File.read_style(copts.style_filename_opt);
   {
     text_opt:i_src.text_opt,

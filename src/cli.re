@@ -20,7 +20,7 @@ let copts_t = {
       default implicit replacement, a very basic HTML structure will be used instead.";
     Cmdliner.Arg.(
       value
-      & opt(string, "index.html.tpl")
+      & opt(some(string), Some("index.html.tpl"))
       & info(["h", "html-template"], ~docv, ~doc)
     );
   };
