@@ -247,10 +247,12 @@ let print = (copts, pipe) => {
     };
   };
   let print = (copts, src:t_print_src) => {
-    let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, ~text_filename=?fo_of_fco(copts.text_fco), src.html);
     switch (pipe) {
-    | false  => Weasyprint.print(html_filename, src.expanded_base_url_opt, src.expanded_output_filename_opt); ""
-    | true => Weasyprint.pipe(html_filename, src.expanded_base_url_opt);
+    | false => {
+      let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, ~text_filename=?fo_of_fco(copts.text_fco), src.html);
+      Weasyprint.print(html_filename, src.expanded_base_url_opt, src.expanded_output_filename_opt); ""
+    }
+    | true  => Weasyprint.pipe(src.html, src.expanded_base_url_opt);
     };
   };
   execute(~copts, ~read, ~transform, ~print);

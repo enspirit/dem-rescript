@@ -19,9 +19,10 @@ let print = (html_filename, base_url_opt, output_filename_opt) => {
   }
 };
 
-let pipe = (html_filename, base_url_opt) => {
+let pipe = (html, base_url_opt) => {
   let base_url_param = base_url_param(base_url_opt);
-  let res = Execa.commandSync({j|weasyprint -f pdf -e utf-8 $base_url_param $html_filename -|j}, ());
+  let options = Execa.options(~shell=false, ~input=html, ());
+  let res = Execa.commandSync({j|weasyprint -f pdf -e utf-8 $base_url_param - -|j}, ~options, ());
   let exit_code = Execa.exitCodeGet(res);
   switch (exit_code) {
   | 0 => Execa.stdoutGet(res);
