@@ -1,7 +1,7 @@
 open Sugar;
 
 type result =
-  | Ok(Js.Promise.t(array(string)), Buffer.t)
+  | Ok(Js.Promise.t(array(Node.Buffer.t)), Buffer.t)
   | Error(string)
 ;
 
@@ -152,7 +152,7 @@ let load_compilation_sources = (copts, data_opt) => {
   };
 };
 
-let execute = (~copts, ~read:((copts, 'a) => 'b), ~transform:((copts, 'b) => 'c), ~print:((copts, 'c) => string)) => {
+let execute = (~copts, ~read:((copts, 'a) => 'b), ~transform:((copts, 'b) => 'c), ~print:((copts, 'c) => Node.Buffer.t)) => {
   let do_it = () => {
     if (copts.publipost && copts.data_fco != None) {
       copts.data_fco -> promise_read_data_array(File.read_data(~batch=true, ~async=copts.async))
@@ -176,9 +176,10 @@ let execute = (~copts, ~read:((copts, 'a) => 'b), ~transform:((copts, 'b) => 'c)
   };
 
   try {
-    let result_promise = do_it() |> then_resolve(res:array(string) => {
+    let result_promise = do_it() |> then_resolve(res:array(Node.Buffer.t) => {
       if (copts.watch_mode) {
-        directories(copts) |> List.iter(d => watch_directory_rec(d, ignore_promise(do_it))); [|""|];
+        let no_buff = Node.Buffer.fromString("");
+        directories(copts) |> List.iter(d => watch_directory_rec(d, ignore_promise(do_it))); [|no_buff|];
       } else {
         res
       };
@@ -210,7 +211,7 @@ let instantiate = (copts) => {
     | None => Js.log(markdown); // TODO: Move in cli
     | Some(_) => ignore(File.write_md(~output_filename_opt, ~text_filename=?fo_of_fco(copts.text_fco), markdown));
     };
-    markdown
+    Node.Buffer.fromString(markdown)
   };
   execute(~copts, ~read, ~transform, ~print);
 };
@@ -231,7 +232,7 @@ let compile = (copts) => {
     | None => Js.log(src.html); // TODO: Move in cli
     | Some(_) => ignore(File.write_html(~output_filename_opt, ~text_filename=?fo_of_fco(copts.text_fco), src.html));
     };
-    src.html
+    Node.Buffer.fromString(src.html)
   };
   execute(~copts, ~read, ~transform, ~print);
 };
@@ -250,7 +251,7 @@ let print = (copts, pipe) => {
     switch (pipe) {
     | false => {
       let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, ~text_filename=?fo_of_fco(copts.text_fco), src.html);
-      Weasyprint.print(html_filename, src.expanded_base_url_opt, src.expanded_output_filename_opt); ""
+      Weasyprint.print(html_filename, src.expanded_base_url_opt, src.expanded_output_filename_opt); Node.Buffer.fromString("");
     }
     | true  => Weasyprint.pipe(src.html, src.expanded_base_url_opt);
     };

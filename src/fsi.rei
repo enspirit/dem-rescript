@@ -1,5 +1,5 @@
 type result =
-  | Ok(Js.Promise.t(array(string)), Buffer.t)
+  | Ok(Js.Promise.t(array(Node.Buffer.t)), Buffer.t)
   | Error(string)
 ;
 

@@ -39,7 +39,7 @@
   "dependencies": {
     "@elliottcable/bs-cmdliner": "^10.2.2",
     "@enspirit/bs-chokidar": "^0.1.1",
-    "@enspirit/bs-execa": "^0.1.2",
+    "@enspirit/bs-execa": "^0.2.1",
     "@enspirit/bs-markdown-it": "^0.4.1",
     "@enspirit/bs-mustache": "^0.4.1",
     "@enspirit/bs-node-sass": "^0.1.1",
