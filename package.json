@@ -1,6 +1,6 @@
 {
   "name": "@enspirit/dem-bs",
-  "version": "0.15.2",
+  "version": "0.15.3",
   "description": "Doc-e-mate in BuckleScript",
   "main": "src/cli.bs.js",
   "bin": {
