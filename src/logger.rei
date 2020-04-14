@@ -1,3 +1,4 @@
+let default_buffer: Buffer.t;
 let format_js_exn: Js.Exn.t => string;
 let format_exn: exn => string;
 let format_caml_js_exn: Caml_js_exceptions.t => string;

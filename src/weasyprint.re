@@ -24,8 +24,8 @@ let pipe = (html_filename, base_url_opt) => {
   let res = Execa.commandSync({j|weasyprint -f pdf -e utf-8 $base_url_param $html_filename -|j}, ());
   let exit_code = Execa.exitCodeGet(res);
   switch (exit_code) {
-  | 0 => Js.log(Execa.stdoutGet(res));
-  | 127 => Logger.error("weasyprint command not found. Please check your weasyprint installation." ++ Execa.stderrGet(res));
-  | _ => Logger.fatal("weasyprint returned an unexpected error. Please report to yoann.guyot@enspirit.be" ++ Execa.stderrGet(res));
+  | 0 => Execa.stdoutGet(res);
+  | 127 => Js.Exn.raiseError("weasyprint command not found. Please check your weasyprint installation." ++ Execa.stderrGet(res));
+  | _ => Js.Exn.raiseError("weasyprint returned an unexpected error. Please report to yoann.guyot@enspirit.be" ++ Execa.stderrGet(res));
   }
 };

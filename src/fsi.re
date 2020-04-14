@@ -1,7 +1,7 @@
 open Sugar;
 
 type result =
-  | Ok(Js.Promise.t(unit))
+  | Ok(Js.Promise.t(array(string)), Buffer.t)
   | Error(string)
 ;
 
@@ -152,7 +152,7 @@ let load_compilation_sources = (copts, data_opt) => {
   };
 };
 
-let execute = (~copts, ~read:((copts, 'a) => 'b), ~transform:((copts, 'b) => 'c), ~print:((copts, 'c) => unit)) => {
+let execute = (~copts, ~read:((copts, 'a) => 'b), ~transform:((copts, 'b) => 'c), ~print:((copts, 'c) => string)) => {
   let do_it = () => {
     if (copts.publipost && copts.data_fco != None) {
       copts.data_fco -> promise_read_data_array(File.read_data(~batch=true, ~async=copts.async))
@@ -176,13 +176,14 @@ let execute = (~copts, ~read:((copts, 'a) => 'b), ~transform:((copts, 'b) => 'c)
   };
 
   try {
-    let result_promise = do_it() |> then_resolve(_ => {
+    let result_promise = do_it() |> then_resolve(res:array(string) => {
       if (copts.watch_mode) {
-        directories(copts) |> List.iter(d => watch_directory_rec(d, ignore_promise(do_it)));
+        directories(copts) |> List.iter(d => watch_directory_rec(d, ignore_promise(do_it))); [|""|];
+      } else {
+        res
       };
-      Logger.print_stderr();
     });
-    Ok(result_promise);
+    Ok(result_promise, Logger.default_buffer);
   } {
   | e => Error(Logger.format_exn(e));
   }
@@ -206,9 +207,10 @@ let instantiate = (copts) => {
     let output_filename_opt = src.expanded_output_filename_opt;
     let Some(markdown) = src.text_opt;
     switch(output_filename_opt) {
-    | None => Js.log(markdown);
+    | None => Js.log(markdown); // TODO: Move in cli
     | Some(_) => ignore(File.write_md(~output_filename_opt, ~text_filename=?fo_of_fco(copts.text_fco), markdown));
     };
+    markdown
   };
   execute(~copts, ~read, ~transform, ~print);
 };
@@ -226,9 +228,10 @@ let compile = (copts) => {
   let print = (copts, src:t_print_src) => {
     let output_filename_opt = src.expanded_output_filename_opt;
     switch(output_filename_opt) {
-    | None => Js.log(src.html);
+    | None => Js.log(src.html); // TODO: Move in cli
     | Some(_) => ignore(File.write_html(~output_filename_opt, ~text_filename=?fo_of_fco(copts.text_fco), src.html));
-    }
+    };
+    src.html
   };
   execute(~copts, ~read, ~transform, ~print);
 };
@@ -246,9 +249,9 @@ let print = (copts, pipe) => {
   let print = (copts, src:t_print_src) => {
     let html_filename = File.write_html(~output_filename_opt=src.expanded_output_filename_opt, ~text_filename=?fo_of_fco(copts.text_fco), src.html);
     switch (pipe) {
-    | false  => Weasyprint.print(html_filename, src.expanded_base_url_opt, src.expanded_output_filename_opt);
+    | false  => Weasyprint.print(html_filename, src.expanded_base_url_opt, src.expanded_output_filename_opt); ""
     | true => Weasyprint.pipe(html_filename, src.expanded_base_url_opt);
-    }
+    };
   };
   execute(~copts, ~read, ~transform, ~print);
 };

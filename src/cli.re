@@ -1,19 +1,20 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %raw "process.argv.shift()";
 
-let version = "0.15.0";
+let version = "0.15.1";
 
 open Sugar;
 
 /* Convert from File system interface (Fsi) result to Cmdliner result type */
 let copts_t_of_fsi_result = (f) => (copts) => switch (f(copts)) {
-| Fsi.Ok(p) => `Ok(p)
+| Fsi.Ok(p, _) => Logger.print_stderr(); `Ok(p |> then_resolve(ignore))
 | Fsi.Error(m) => `Error(false, m)
 };
 
-let copts_t_of_fsi_print_result = (f) => (copts, pipe) => switch (f(copts, pipe)) {
-| Fsi.Ok(p) => `Ok(p)
-| Fsi.Error(m) => `Error(false, m)
+let copts_t_of_fsi_print_result = (f) => (copts, pipe) => switch (f(copts, pipe), pipe) {
+| (Fsi.Ok(p, _), true) => Logger.print_stderr(); `Ok(p |> then_resolve(a => Js.log(a[0])));
+| (Fsi.Ok(p, _), false) => Logger.print_stderr(); `Ok(p |> then_resolve(ignore));
+| (Fsi.Error(m), _) => `Error(false, m);
 };
 
 let fco_of_option_filename = o => {
