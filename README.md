@@ -158,3 +158,27 @@ with `node src/cli.bs.js` might not work in some cases.
 Note: You may also consider linking the binary using `npm link` in order to use
 the `dem` command, just as would do a user after installing the package. To undo
 this, use `npm unlink`.
+
+## Using the docker image
+
+We provide a docker image that RUNs the `dem` command by default with
+default index.md, index.css and index.json files.
+
+```
+docker run enspirit/dem
+```
+
+A typical use case is to transform a markdown text to a beautiful .html file.
+It's straightforward if you mount a docker volume:
+
+```
+docker run -v text.md:/home/app/index.md enspirit/dem
+```
+
+Another use case is to print the text as a .pdf file. A similar approach is
+used. For now, since `dem print` requires using the `-o` option, it's slightly
+more complicated though:
+
+```
+docker run -v text.md:/home/app/index.md -v .:/home/app/result enspirit/dem dem print -o result/index.pdf
+```
