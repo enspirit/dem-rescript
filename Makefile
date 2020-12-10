@@ -236,42 +236,57 @@ testDemCompileAsyncPublipostDO:
 	diff /tmp/compile_async_publipost_do_bla.actual.html acceptance/compile_async_publipost_do_bla.expected.html
 	diff /tmp/compile_async_publipost_do_dlo.actual.html acceptance/compile_async_publipost_do_dlo.expected.html
 
+test:	testDem \
+	testDemO testDemOutput \
+	testDemT testDemText \
+	testDemDjson testDemDataJson \
+	testDemDyaml testDemDataYaml \
+	testDemH testDemHtmlTemplate \
+	testDemScss testDemStyleCss \
+	testDemPublipost testDemPublipostDO \
+	testDemAsyncD testDemAsyncPublipostDO \
+	testDemInstantiate \
+	testDemInstantiateO testDemInstantiateOutput \
+	testDemInstantiateT testDemInstantiateText \
+	testDemInstantiateDjson testDemInstantiateDataJson \
+	testDemInstantiateDyaml testDemInstantiateDataYaml \
+	testDemInstantiateH testDemInstantiateHtmlTemplate \
+	testDemInstantiateScss testDemInstantiateStyleCss \
+	testDemInstantiatePublipostDO \
+	testDemInstantiateAsyncD \
+	testDemInstantiateAsyncPublipostDO \
+	testDemCompile \
+	testDemCompileO testDemCompileOutput \
+	testDemCompileT testDemCompileText \
+	testDemCompileDjson testDemCompileDataJson \
+	testDemCompileDyaml testDemCompileDataYaml \
+	testDemCompileH testDemCompileHtmlTemplate \
+	testDemCompileScss testDemCompileStyleCss \
+	testDemCompilePublipostDO \
+	testDemCompileAsyncD \
+	testDemCompileAsyncPublipostDO \
+	testDemHelp \
+	testDemHelpCompile \
+	testDemVersion
 
-test: testDem \
-	    testDemO testDemOutput \
-	    testDemT testDemText \
-			testDemDjson testDemDataJson \
-  	  testDemDyaml testDemDataYaml \
-			testDemH testDemHtmlTemplate \
-			testDemScss testDemStyleCss \
-			testDemPublipost testDemPublipostDO \
-			testDemAsyncD testDemAsyncPublipostDO \
-			testDemInstantiate \
-	    testDemInstantiateO testDemInstantiateOutput \
-	    testDemInstantiateT testDemInstantiateText \
-			testDemInstantiateDjson testDemInstantiateDataJson \
-  	  testDemInstantiateDyaml testDemInstantiateDataYaml \
-			testDemInstantiateH testDemInstantiateHtmlTemplate \
-			testDemInstantiateScss testDemInstantiateStyleCss \
-			testDemInstantiatePublipostDO \
-			testDemInstantiateAsyncD \
-			testDemInstantiateAsyncPublipostDO \
-			testDemCompile \
-	    testDemCompileO testDemCompileOutput \
-	    testDemCompileT testDemCompileText \
-			testDemCompileDjson testDemCompileDataJson \
-  	  testDemCompileDyaml testDemCompileDataYaml \
-			testDemCompileH testDemCompileHtmlTemplate \
-			testDemCompileScss testDemCompileStyleCss \
-			testDemCompilePublipostDO \
-			testDemCompileAsyncD \
-			testDemCompileAsyncPublipostDO \
-			testDemHelp \
-			testDemHelpCompile \
-			testDemVersion
+clean:
+	rm -f Dockerfile.built Dockerfile.log
 
-	# Not automatically tested:
-	# COMMANDS
-	#        print
-	# OPTIONS (for all commands)
-	#        -w, --watch
+image: Dockerfile.built
+
+Dockerfile.built: Dockerfile package.json bsconfig.json $(shell find src -type f)
+	docker build -t enspirit/dem . | tee Dockerfile.log
+	touch Dockerfile.built
+
+ci: image
+	docker run -v ${PWD}:/dem --entrypoint make enspirit/dem test
+
+push: Dockerfile.built
+	docker tag enspirit/dem q8s.quadrabee.com/enspirit/dem
+	docker push q8s.quadrabee.com/enspirit/dem
+
+# Not automatically tested:
+# COMMANDS
+#        print
+# OPTIONS (for all commands)
+#        -w, --watch
