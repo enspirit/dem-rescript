@@ -5,3 +5,4 @@ node_modules
 *.bs.js
 .atom
 dem.log
+Dockerfile.*
