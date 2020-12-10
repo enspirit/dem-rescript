@@ -1,4 +1,4 @@
-FROM node:15
+FROM node:15.3
 
 USER root
 ENV HOME /home/app
@@ -17,4 +17,4 @@ ADD bases/markdown-css.css /home/app/index.css
 ADD bases/empty.json /home/app/index.json
 ADD README.md /home/app/index.md
 
-CMD ["dem"]
+ENTRYPOINT ["dem"]

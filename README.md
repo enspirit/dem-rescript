@@ -172,7 +172,7 @@ A typical use case is to transform a markdown text to a beautiful .html file.
 It's straightforward if you mount a docker volume:
 
 ```
-docker run -v text.md:/home/app/index.md enspirit/dem
+docker run -v $PWD/text.md:/home/app/index.md enspirit/dem
 ```
 
 Another use case is to print the text as a .pdf file. A similar approach is
@@ -180,5 +180,5 @@ used. For now, since `dem print` requires using the `-o` option, it's slightly
 more complicated though:
 
 ```
-docker run -v text.md:/home/app/index.md -v .:/home/app/result enspirit/dem dem print -o result/index.pdf
+docker run -v $PWD/text.md:/home/app/index.md -v $PWD:/home/app/result enspirit/dem print -o result/index.pdf
 ```
