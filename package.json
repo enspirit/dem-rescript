@@ -1,21 +1,20 @@
 {
-  "name": "@enspirit/dem-bs",
+  "name": "@enspirit/dem-rescript",
   "version": "0.15.3",
-  "description": "Doc-e-mate in BuckleScript",
+  "description": "Doc-e-mate in ReScript",
   "main": "src/cli.bs.js",
   "bin": {
     "dem": "bin/dem"
   },
-  "homepage": "https://github.com/enspirit/dem-bs#readme",
+  "homepage": "https://github.com/enspirit/dem-rescript#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/enspirit/dem-bs.git"
+    "url": "git+https://github.com/enspirit/dem-rescript.git"
   },
   "author": "ygu",
   "license": "ISC",
   "keywords": [
-    "reason",
-    "bucklescript",
+    "rescript",
     "markdown",
     "mustache",
     "doc-e-mate"
@@ -38,12 +37,12 @@
   },
   "dependencies": {
     "@elliottcable/bs-cmdliner": "^10.2.2",
-    "@enspirit/bs-chokidar": "^0.1.1",
-    "@enspirit/bs-execa": "^0.2.1",
-    "@enspirit/bs-markdown-it": "^0.4.1",
-    "@enspirit/bs-mustache": "^0.4.1",
-    "@enspirit/bs-node-sass": "^0.1.1",
-    "@enspirit/bs-prettier": "^0.3.0",
+    "@enspirit/rescript-chokidar": "^1.0.0",
+    "@enspirit/rescript-execa": "^1.0.0",
+    "@enspirit/rescript-markdown-it": "^1.0.2",
+    "@enspirit/rescript-mustache": "^1.0.1",
+    "@enspirit/rescript-node-sass": "^1.0.0",
+    "@enspirit/rescript-prettier": "^1.0.0",
     "bs-platform": "8.2.0",
     "bs-yaml": "^1.0.2",
     "bucklescript": "0.0.2",

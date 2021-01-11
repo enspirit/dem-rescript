@@ -12,7 +12,7 @@ RUN apt-get update && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g @enspirit/dem-bs
+RUN npm install -g @enspirit/dem-rescript
 
 ADD bases/newcss/index.css  /dem/index.css
 ADD bases/newcss/index.json /dem/index.json

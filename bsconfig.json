@@ -1,5 +1,5 @@
 {
-  "name": "@enspirit/dem-bs",
+  "name": "@enspirit/dem-rescript",
   "version": "0.1.0",
   "sources": [
     {
@@ -19,12 +19,12 @@
   "bs-dependencies": [
     "@elliottcable/bs-cmdliner",
     "bs-yaml",
-    "@enspirit/bs-mustache",
-    "@enspirit/bs-markdown-it",
-    "@enspirit/bs-prettier",
-    "@enspirit/bs-execa",
-    "@enspirit/bs-chokidar",
-    "@enspirit/bs-node-sass"
+    "@enspirit/rescript-mustache",
+    "@enspirit/rescript-markdown-it",
+    "@enspirit/rescript-prettier",
+    "@enspirit/rescript-execa",
+    "@enspirit/rescript-chokidar",
+    "@enspirit/rescript-node-sass"
   ],
   "bs-dev-dependencies": ["@glennsl/bs-jest"],
   "warnings": {

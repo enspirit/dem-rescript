@@ -1,4 +1,4 @@
-# BuckleScript executes Mustache using complex js data.
+# ReScript executes Mustache using complex js data.
 
 # just  it
 

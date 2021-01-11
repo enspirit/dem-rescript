@@ -15,7 +15,7 @@ injected from JSON or YAML files.
 Install the `dem` command line using `npm`, locally:
 
 ```
-npm install @enspirit/dem-bs
+npm install @enspirit/dem-rescript
 ```
 
 Or globally using the `-g` flag.
@@ -109,7 +109,7 @@ examples.
 
 ## Hacking
 
-The `dem` command line is written in BuckleScript, wth great help from the
+The `dem` command line is written in ReScript, with great help from the
 following libraries:
 * mustache.js, see https://mustache.github.io/
 * markdown-it, see https://github.com/markdown-it/markdown-it and https://spec.commonmark.org/

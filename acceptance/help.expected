@@ -98,4 +98,4 @@ EXIT STATUS
        125 on unexpected internal errors (bugs).
 
 BUGS
-       Please report bugs at https://github.com/enspirit/dem-bs
+       Please report bugs at https://github.com/enspirit/dem-rescript

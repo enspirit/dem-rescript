@@ -3,8 +3,8 @@
     <style></style>
   </head>
   <body>
-    <article id="bucklescript-executes-mustache-using-json-data">
-      <h1>Bucklescript executes Mustache using json data.</h1>
+    <article id="rescript-executes-mustache-using-json-data">
+      <h1>ReScript executes Mustache using json data.</h1>
     </article>
     <article id="just-do-it"><h1>just do it</h1></article>
     <article id="my-name-is-joe"><h1>my name is Joe</h1></article>

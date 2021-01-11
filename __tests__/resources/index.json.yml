@@ -1,4 +1,4 @@
 ---
-executer: BuckleScript
+executer: ReScript
 executed: Mustache
 data_format: complex js

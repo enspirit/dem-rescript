@@ -77,7 +77,7 @@ testDemPublipost:
 testDemPublipostDO:
 	dem -t acceptance/resources/index.md --publipost -d acceptance/resources/list.json -o "/tmp/publipost_do_{{executer}}.actual.html"
 	diff /tmp/publipost_do_Buble.actual.html acceptance/publipost_do_Buble.expected.html
-	diff /tmp/publipost_do_BuckleScript.actual.html acceptance/publipost_do_BuckleScript.expected.html
+	diff /tmp/publipost_do_ReScript.actual.html acceptance/publipost_do_ReScript.expected.html
 
 testDemAsyncD:
 	dem --async -t acceptance/resources/index_foobar.md -d acceptance/resources/promise.json.js > /tmp/async_d.actual
@@ -151,7 +151,7 @@ testDemInstantiateStyleSass:
 testDemInstantiatePublipostDO:
 	dem instantiate -t acceptance/resources/index.md --publipost -d acceptance/resources/list.json -o "/tmp/instantiate_publipost_do_{{executer}}.actual.md"
 	diff /tmp/instantiate_publipost_do_Buble.actual.md acceptance/instantiate_publipost_do_Buble.expected.md
-	diff /tmp/instantiate_publipost_do_BuckleScript.actual.md acceptance/instantiate_publipost_do_BuckleScript.expected.md
+	diff /tmp/instantiate_publipost_do_ReScript.actual.md acceptance/instantiate_publipost_do_ReScript.expected.md
 
 testDemInstantiateAsyncD:
 	dem instantiate --async -t acceptance/resources/index_foobar.md -d acceptance/resources/promise.json.js > /tmp/instantiate_async_d.actual
@@ -225,7 +225,7 @@ testDemCompileStyleSass:
 testDemCompilePublipostDO:
 	dem compile -t acceptance/resources/index.md --publipost -d acceptance/resources/list.json -o "/tmp/compile_publipost_do_{{executer}}.actual.html"
 	diff /tmp/compile_publipost_do_Buble.actual.html acceptance/compile_publipost_do_Buble.expected.html
-	diff /tmp/compile_publipost_do_BuckleScript.actual.html acceptance/compile_publipost_do_BuckleScript.expected.html
+	diff /tmp/compile_publipost_do_ReScript.actual.html acceptance/compile_publipost_do_ReScript.expected.html
 
 testDemCompileAsyncD:
 	dem compile --async -t acceptance/resources/index_foobar.md -d acceptance/resources/promise.json.js > /tmp/compile_async_d.actual
