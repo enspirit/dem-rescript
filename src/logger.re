@@ -17,7 +17,7 @@ let format_exn = e => switch (Js.Exn.asJsExn(e)) {
   | Some(js_exn) => format_js_exn(js_exn)
 };
 
-let format_caml_js_exn = e => {j|$e.|j};
+let format_js_exn = e => {j|$e.|j};
 
 let default_logfile = "dem.log";
 let default_buffer = Buffer.create(80); // mutable, check ReasonML Buffer API
@@ -59,12 +59,12 @@ let fatal = (~buffer=?, msg) => {
 
 let save = (~buffer=default_buffer, ~filename=default_logfile, ()) => {
   try (Node.Fs.writeFileAsUtf8Sync(filename, Buffer.contents(buffer))) {
-  | Caml_js_exceptions.Error(e) => Js.Console.error({j|$e.|j});
+  | Js_exn.Error(e) => Js.Console.error({j|$e.|j});
   };
 };
 
 let print_stderr = (~buffer=default_buffer, ()) => {
   try (Js.Console.error(Buffer.contents(buffer))) {
-  | Caml_js_exceptions.Error(e) => Js.Console.error({j|$e.|j});
+  | Js_exn.Error(e) => Js.Console.error({j|$e.|j});
   };
 };

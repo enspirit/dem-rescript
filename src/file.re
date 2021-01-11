@@ -3,7 +3,7 @@ open Sugar;
 let robust_read = (what, filename) => {
   Logger.info({j|Reading $what from "$filename".|j});
   try (Some(Node.Fs.readFileAsUtf8Sync(filename))) {
-  | Caml_js_exceptions.Error(e) => Logger.error @@ Logger.format_caml_js_exn(e); None
+  | Js_exn.Error(e) => Logger.error @@ Logger.format_js_exn(e); None
   };
 }
 
@@ -186,7 +186,7 @@ let mkdirSync = path => {
 let ensure_path = (filename) => {
   let dir = Node.Path.dirname(filename);
   try (mkdirSync(dir)) {
-  | Caml_js_exceptions.Error(e) => Logger.error @@ Logger.format_caml_js_exn(e); ()
+  | Js_exn.Error(e) => Logger.error @@ Logger.format_js_exn(e); ()
   }
 };
 
@@ -194,7 +194,7 @@ let robust_write = (what, filename, content) => {
   Logger.info({j|Writing $what in "$filename".|j});
   ensure_path(filename);
   try (Node.Fs.writeFileAsUtf8Sync(filename, content)) {
-  | Caml_js_exceptions.Error(e) => Logger.error @@ Logger.format_caml_js_exn(e); ()
+  | Js_exn.Error(e) => Logger.error @@ Logger.format_js_exn(e); ()
   };
 };
 
