@@ -2,7 +2,7 @@ NAME
        dem-compile - compiles files in current directory
 
 SYNOPSIS
-       dem compile [OPTION]...
+       dem compile [OPTION]... 
 
 DESCRIPTION
        Compiles documents written in Markdown, styled in CSS, with business
@@ -47,6 +47,10 @@ OPTIONS
            default implicit replacement, an empty content will be used
            instead.
 
+       -u URL, --base-url=URL
+           Set the base for relative URLs in the text source (and HTML output
+           as well). This is exactly the same option as in weasyprint.
+
        -w, --watch
            Enable watch mode. Watches for modification of source files -
            which are files with the following extensions: md, json, yml, js,
@@ -81,4 +85,3 @@ EXIT STATUS
        125 on unexpected internal errors (bugs).
 
 BUGS
-       Please report bugs at https://github.com/enspirit/dem-rescript
