@@ -176,7 +176,7 @@ let help_secs = list{
   #Noblank,
   #P("Use `$(mname) help environment' for help on environment variables."),
   #S(Cmdliner.Manpage.s_bugs),
-  #P("Please report bugs at https://github.com/enspirit/dem-bs"),
+  #P("Please report bugs at https://github.com/enspirit/dem-rescript"),
 }
 
 /* ***************************************************************************
