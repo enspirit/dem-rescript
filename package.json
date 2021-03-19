@@ -1,6 +1,6 @@
 {
   "name": "@enspirit/dem-rescript",
-  "version": "0.15.3",
+  "version": "1.0.0",
   "description": "Doc-e-mate in ReScript",
   "main": "src/cli.bs.js",
   "bin": {
