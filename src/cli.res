@@ -1,7 +1,7 @@
 // This is required because Node.js doesn't follow the POSIX standard for argv.
 %%raw("process.argv.shift()")
 
-let version = "0.16.0"
+let version = "1.0.0"
 
 open Sugar
 
