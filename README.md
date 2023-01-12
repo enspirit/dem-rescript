@@ -1,3 +1,23 @@
+*Warning*: an effort has been made to move from this monorepo project to a
+modular version of it. Thus, you will find a more recent version of this
+project in the following projects. By "more recent" we mean that those projects
+are up-to-date with the last version of rescript environment and language (10.0.1).
+- https://github.com/enspirit/dem-core-rescript the core package of dem-rescript,
+which can be used for its main features functions. Mainly compiling some inputs
+(text, data, style) into a string output.
+- https://github.com/enspirit/dem-fsi-rescript the file system interface package
+of dem-rescript which can be used for adding a file system layer to the core one.
+- https://github.com/enspirit/dem-web-api-rescript the web api package of
+dem-rescript which is meant to be used for easily integrating to any web
+application. This is a work-in-progress package. It has been developped in
+rescript in order to integrate best with the other layers of rescript and avoid
+unsafe conversions of types. We plan to develop and use a finitio-rescript
+package in order to guarantee the type contracts with clients of this api.
+
+**Note that the modular version of rescript described above does not integrate
+any cli at this time. That's why this project is not closed yet, despite the
+obsolete aspect of its code and libraries.**
+
 # Doc-e-mate, your document's best friend
 
 This repository holds the `dem` commandline tool, that allows you to generate
@@ -194,3 +214,8 @@ scenario is probably closer to what you want:
 docker run -v $PWD:/dem enspirit/dem
 docker run -v $PWD:/dem enspirit/dem print -o index.pdf
 ```
+
+ ## Publishing
+
+ All the releases were published using `np` so far. Cf.
+ https://github.com/sindresorhus/np
